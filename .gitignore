@@ -1,0 +1,42 @@
+# --- Node & Backend ---
+node_modules/
+**/node_modules/
+.env
+*.log
+package-lock.json
+
+# --- Flutter / Dart ---
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+**/build/
+frontend/pubspec.lock
+
+# --- Archivos de Sistema e IDE ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Backups y Archivos Personales (LIMPIEZA) ---
+dev-backup/
+backup_scripts_*/
+deploy/
+*.backup
+*.old
+*.pdf
+*.avif
+*.jpg
+*.svg
+*.html
+*_files/
+scripts/
+
+# --- Scripts de diagnóstico/migración ---
+*.sh
+migrate_products_detailed.js
+test_mongo.js
+full_diagnostic.sh
+diagnose.sh
