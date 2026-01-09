@@ -1,10 +1,6 @@
-// src/controllers/products.controller.js
-
 import asyncHandler from '../middleware/asyncHandler.middleware.js';
 import Product from '../models/Product.model.js';
 import cloudinary from '../config/cloudinary.js';
-
-
 
 /* =======================
    PÚBLICO
@@ -29,10 +25,25 @@ export const getProducts = asyncHandler(async (req, res) => {
     };
   }
 
+  // 🔽 Ordenamiento
+  let sort = { createdAt: -1 };
+
+  switch (req.query.sort) {
+    case 'price':
+      sort = { price: 1 };
+      break;
+    case '-price':
+      sort = { price: -1 };
+      break;
+    case 'new':
+      sort = { createdAt: -1 };
+      break;
+  }
+
   const total = await Product.countDocuments(filter);
 
   const products = await Product.find(filter)
-    .sort({ createdAt: -1 })
+    .sort(sort)
     .skip(skip)
     .limit(limit);
 
@@ -46,6 +57,19 @@ export const getProducts = asyncHandler(async (req, res) => {
   });
 });
 
+
+// GET /api/v1/products/categories
+export const getProductCategories = asyncHandler(async (req, res) => {
+  const categories = await Product.distinct('category', {
+    isActive: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    count: categories.length,
+    data: categories.sort(),
+  });
+});
 
 // GET /api/v1/products/:id
 export const getProductById = asyncHandler(async (req, res) => {
@@ -61,6 +85,24 @@ export const getProductById = asyncHandler(async (req, res) => {
     data: product,
   });
 });
+
+// GET /api/v1/products/featured
+export const getFeaturedProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find({
+    isActive: true,
+    featured: true,
+  })
+    .sort({ createdAt: -1 })
+    .limit(8);
+
+  res.status(200).json({
+    success: true,
+    count: products.length,
+    data: products,
+  });
+});
+
+
 
 /* =======================
    ADMIN
@@ -81,7 +123,6 @@ export const getAdminProducts = asyncHandler(async (req, res) => {
 export const createProduct = asyncHandler(async (req, res) => {
   req.body.user = req.user._id;
 
-  // 🟢 Si hubo imagen subida a Cloudinary, la guardamos
   if (req.cloudinaryImage) {
     req.body.image = req.cloudinaryImage;
   }
@@ -94,7 +135,6 @@ export const createProduct = asyncHandler(async (req, res) => {
   });
 });
 
-
 // PATCH /api/v1/admin/products/:id
 export const updateProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
@@ -104,12 +144,10 @@ export const updateProduct = asyncHandler(async (req, res) => {
     throw new Error('Producto no encontrado');
   }
 
-  // 🧨 Si viene imagen nueva, borrar la vieja
   if (req.cloudinaryImage) {
     if (product.image?.public_id) {
       try {
         await cloudinary.uploader.destroy(product.image.public_id);
-        console.log('🗑️ Imagen anterior eliminada');
       } catch (err) {
         console.warn('⚠️ Error borrando imagen vieja:', err.message);
       }
@@ -130,7 +168,6 @@ export const updateProduct = asyncHandler(async (req, res) => {
   });
 });
 
-
 // DELETE /api/v1/admin/products/:id
 export const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
@@ -140,20 +177,14 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     throw new Error('Producto no encontrado');
   }
 
-  // 🧨 1. Borrar imagen de Cloudinary si existe
-  if (product.image && product.image.public_id) {
+  if (product.image?.public_id) {
     try {
       await cloudinary.uploader.destroy(product.image.public_id);
-      console.log('🗑️ Imagen eliminada de Cloudinary:', product.image.public_id);
     } catch (err) {
-      console.warn(
-        '⚠️ No se pudo borrar imagen de Cloudinary:',
-        err.message
-      );
+      console.warn('⚠️ Error borrando imagen:', err.message);
     }
   }
 
-  // 🗑️ 2. Borrar producto de MongoDB
   await product.deleteOne();
 
   res.status(200).json({
