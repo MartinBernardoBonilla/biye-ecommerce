@@ -13,6 +13,7 @@ import { generateToken } from '../utils/generateToken.js';
 
 const router = express.Router();
 
+
 // Validaciones para el login y registro
 const loginValidation = [
     body('email').isEmail().withMessage('El correo electrónico debe ser válido'),
@@ -81,6 +82,6 @@ router.route('/admin/login').post(loginValidation, validate, async (req, res) =>
 // --------------------------------------------------------------------------
 
 // Obtener perfil del usuario logueado
-router.route('/profile').get(protect, getUserProfile);
+router.route('/me').get(protect, getUserProfile);
 
 export default router;

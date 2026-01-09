@@ -12,6 +12,7 @@ import {
 import { protect } from '../middleware/auth.middleware.js';
 import { adminAuth } from '../middleware/admin.middleware.js'; 
 import { uploadSingleImage } from '../middleware/upload.middleware.js'; // Necesario para POST/PUT
+import { uploadToCloudinary } from '../middleware/uploadToCloudinary.middleware.js';
 
 const router = express.Router();
 
@@ -24,11 +25,16 @@ router.use(protect, adminAuth);
 router.get('/products', getAdminProducts);
 
 // @route   POST /api/v1/admin/products (Creación)
-router.post('/products', uploadSingleImage, createProduct);
+router.post(
+  '/products',
+  uploadSingleImage,
+  uploadToCloudinary,
+  createProduct
+);
 
 // @route   PATCH /api/v1/admin/products/:id (Actualización)
 // 🎯 CORRECCIÓN CLAVE: Cambiar PUT por PATCH
-router.patch('/products/:id', uploadSingleImage, updateProduct);
+router.patch('/products/:id', uploadSingleImage,  uploadToCloudinary, updateProduct);
 // @route   DELETE /api/v1/admin/products/:id (Eliminación)
 router.delete('/products/:id', deleteProduct); // ⬅️ ¡ESTA ES LA RUTA QUE FALTABA!
 

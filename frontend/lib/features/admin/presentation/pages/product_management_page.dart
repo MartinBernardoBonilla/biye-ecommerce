@@ -96,7 +96,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
       await adminService.updateProduct(
         product.id ?? '',
         {'isActive': true},
-        null,
       );
 
       if (mounted) {
