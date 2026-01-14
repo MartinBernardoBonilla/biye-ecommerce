@@ -16,6 +16,7 @@ import 'package:biye/features/auth/presentation/registration_screen.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:biye/features/home/presentation/home_screen.dart';
 import 'shared/utils/network_test.dart';
+import 'package:biye/features/payment/data/services/mercadopago_service.dart';
 
 void main() {
   // Asegurar que Flutter esté inicializado antes de las pruebas
@@ -38,7 +39,16 @@ class MyApp extends StatelessWidget {
       providers: [
         // 👈 Aquí instanciamos la clase AdminService correctamente
         Provider(create: (_) => AdminService()),
-        BlocProvider(create: (_) => CartBloc()),
+        BlocProvider(
+          create: (_) => CartBloc(
+            mercadoPagoService: MercadoPagoService(
+              baseUrl: kDebugMode
+                  ? 'https://TU-NGROK.ngrok-free.app'
+                  : 'https://api.biye.com',
+              token: '', // 👈 luego lo vamos a conectar con auth
+            ),
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'Biye',

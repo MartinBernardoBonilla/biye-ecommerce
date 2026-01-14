@@ -31,7 +31,7 @@ dependencies:
   cloud_firestore: ^6.0.1
 
   # Network & APIs
-  http: ^1.5.0
+  http: ^1.6.0
 
   # Navigation & URLs
   flutter_custom_tabs: ^2.4.0

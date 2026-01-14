@@ -8,6 +8,8 @@ import errorHandler from './middleware/errorHandler.middleware.js';
 import adminRoutes from './routes/admin.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import categoriesRoutes from './routes/categories.routes.js';
+import ordersRoutes from './routes/orders.routes.js';
+
 
 const app = express();
 
@@ -59,25 +61,35 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Mercado Pago
+// Mercado Pago
 const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
-if (!accessToken) {
-    console.error('⚠️  MERCADOPAGO_ACCESS_TOKEN no configurado');
-} else {
-    const mpClient = new MercadoPagoConfig({
-        accessToken,
-        options: { timeout: 5000 },
-    });
-    app.locals.paymentClient = mpClient;
 
-    console.log('✅ Mercado Pago configurado');
+if (!accessToken) {
+  console.error('⚠️  MERCADOPAGO_ACCESS_TOKEN no configurado');
+} else {
+  console.log(
+    '💳 MP MODE:',
+    accessToken.startsWith('TEST-') ? 'TEST' : 'PROD'
+  );
+
+  const mpClient = new MercadoPagoConfig({
+    accessToken,
+    options: { timeout: 5000 },
+  });
+
+  app.locals.paymentClient = mpClient;
+  console.log('✅ Mercado Pago configurado');
 }
 
+
 // Rutas
-app.use('/api/v1', authRoutes);
+app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/categories', categoriesRoutes);
+app.use('/api/v1/orders', ordersRoutes);
+
 
 
 

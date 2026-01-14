@@ -1,38 +1,34 @@
-import 'package:biye/features/cart/domain/entities/cart_item.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-// Este servicio simula la llamada al backend de Node.js que se encarga
-// de comunicarse con la API de Mercado Pago y generar la Preferencia.
 class MercadoPagoService {
-  // Aquí se llamaría a tu API de Node.js para generar la preferencia de pago.
-  // Tu backend debe retornar un objeto con el ID de la preferencia.
-  Future<String> createPreference(List<CartItem> items, double total) async {
-    // Implementación real:
-    /*
-    final url = Uri.parse('TU_URL_DE_NGROK/api/v1/payment/create-preference');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'items': items.map((e) => e.toJson()).toList(),
-        'total': total,
-      }),
+  final String baseUrl;
+  final String token;
+
+  MercadoPagoService({
+    required this.baseUrl,
+    required this.token,
+  });
+
+  /// Llama a tu backend para crear la preferencia MP
+  Future<String> createPaymentPreference(String orderId) async {
+    final url = Uri.parse(
+      '$baseUrl/api/v1/payments/mercadopago/$orderId',
     );
 
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      return jsonResponse['preferenceId'] as String;
-    } else {
-      throw Exception('Fallo al crear la preferencia de pago');
-    }
-    */
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
 
-    // --- MOCK TEMPORAL ---
-    await Future.delayed(const Duration(seconds: 1));
-    if (total > 0) {
-      // Simula un ID de preferencia retornado por el backend
-      return 'MP-ID-ABC-123-${DateTime.now().millisecondsSinceEpoch}';
-    } else {
-      throw Exception('El carrito está vacío o el total es cero.');
+    if (response.statusCode != 200) {
+      throw Exception('Error creando preferencia MercadoPago');
     }
+
+    final data = json.decode(response.body);
+    return data['initPoint'];
   }
 }

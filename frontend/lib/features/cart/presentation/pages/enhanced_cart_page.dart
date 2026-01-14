@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:biye/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:biye/features/cart/presentation/bloc/cart_state.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_event.dart';
+import 'package:biye/features/cart/presentation/bloc/cart_state.dart';
 import 'package:biye/features/cart/domain/entities/cart_item.dart';
-import 'package:url_launcher/url_launcher.dart'; // Necesario para abrir el navegador de Mercado Pago
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -14,7 +15,7 @@ class CartPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Mi Carrito de Compras',
+          'Mi Carrito',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.black,
@@ -22,41 +23,31 @@ class CartPage extends StatelessWidget {
       ),
       body: BlocConsumer<CartBloc, CartState>(
         listener: (context, state) async {
-          // --- LÓGICA DE NAVEGACIÓN DE MERCADO PAGO ---
-          if (state is CheckoutSuccessState && state.preferenceId != null) {
-            // 1. Construir la URL de Checkout de Mercado Pago
-            // El ID de preferencia se usa para generar la URL final.
-            // NOTA: Esta URL debe ser la URL de checkout de Mercado Pago
-            // o una URL que el backend te indique. Para simular, usaremos un endpoint conocido.
-            final String checkoutUrl =
-                'https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${state.preferenceId}';
+          // ✅ Checkout OK → abrir Mercado Pago
+          if (state is CheckoutSuccessState) {
+            final Uri uri = Uri.parse(state.initPoint);
 
-            final Uri uri = Uri.parse(checkoutUrl);
-
-            // 2. Abrir el navegador con la URL
             if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-
-              // Opcional: Limpiar el carrito después de enviar la preferencia
-              // context.read<CartBloc>().add(ClearCart());
+              await launchUrl(
+                uri,
+                mode: LaunchMode.externalApplication,
+              );
             } else {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'No se pudo abrir la URL de pago: $checkoutUrl',
-                    ),
+                  const SnackBar(
+                    content: Text('No se pudo abrir Mercado Pago'),
                   ),
                 );
               }
             }
           }
 
-          // Mostrar errores de checkout
+          // ❌ Error de pago
           if (state is CheckoutErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error de Pago: ${state.message}'),
+                content: Text(state.message),
                 backgroundColor: Colors.red,
               ),
             );
@@ -64,66 +55,73 @@ class CartPage extends StatelessWidget {
         },
         builder: (context, state) {
           if (state.items.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.shopping_cart_outlined,
-                    size: 80,
-                    color: Colors.grey[400]!,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Tu carrito está vacío.',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                ],
-              ),
-            );
+            return const _EmptyCart();
           }
 
           return Column(
             children: [
-              // Lista de Artículos
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.all(12),
                   itemCount: state.items.length,
                   itemBuilder: (context, index) {
-                    final item = state.items[index];
-                    return _CartItemTile(item: item);
+                    return _CartItemTile(item: state.items[index]);
                   },
                 ),
               ),
-
-              // Resumen y Botón de Pago
-              _buildCheckoutSummary(context, state),
+              _CheckoutSummary(state: state),
             ],
           );
         },
       ),
     );
   }
+}
 
-  Widget _buildCheckoutSummary(BuildContext context, CartState state) {
-    final bool isCheckoutLoading = state.isCheckoutLoading;
+/* ───────────────────────── EMPTY CART ───────────────────────── */
 
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+class _EmptyCart extends StatelessWidget {
+  const _EmptyCart();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'Tu carrito está vacío',
+            style: TextStyle(fontSize: 18, color: Colors.grey),
           ),
         ],
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
+      ),
+    );
+  }
+}
+
+/* ───────────────────────── CHECKOUT SUMMARY ───────────────────────── */
+
+class _CheckoutSummary extends StatelessWidget {
+  final CartState state;
+
+  const _CheckoutSummary({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 10,
+            color: Colors.black12,
+            offset: Offset(0, -5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -132,53 +130,52 @@ class CartPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Total a Pagar:',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                'Total',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Text(
                 '\$${state.total.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blueAccent,
+                  color: Colors.blue,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: isCheckoutLoading
-                ? null // Deshabilitar si está cargando
+            onPressed: state.isCheckoutLoading
+                ? null
                 : () {
-                    // Dispara el evento que inicia la comunicación con Mercado Pago (vía BLOC)
-                    context.read<CartBloc>().add(const StartCheckout());
+                    context.read<CartBloc>().add(
+                          const StartCheckout(
+                            orderId: 'ORDER_TEST_001',
+                          ),
+                        );
                   },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.yellow[700]!, // Color distintivo de MP
-              padding: const EdgeInsets.symmetric(vertical: 15),
+              backgroundColor: Colors.yellow[700],
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: isCheckoutLoading
+            child: state.isCheckoutLoading
                 ? const SizedBox(
-                    width: 24,
                     height: 24,
+                    width: 24,
                     child: CircularProgressIndicator(
-                      color: Colors.black,
                       strokeWidth: 2,
+                      color: Colors.black,
                     ),
                   )
                 : const Text(
                     'Pagar con Mercado Pago',
                     style: TextStyle(
+                      color: Colors.black,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
                     ),
                   ),
           ),
@@ -188,7 +185,8 @@ class CartPage extends StatelessWidget {
   }
 }
 
-// Widget auxiliar para mostrar un solo artículo en el carrito
+/* ───────────────────────── CART ITEM TILE ───────────────────────── */
+
 class _CartItemTile extends StatelessWidget {
   final CartItem item;
 
@@ -197,15 +195,14 @@ class _CartItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<CartBloc>();
+
     return Card(
-      elevation: 3,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(8),
         child: Row(
           children: [
-            // Imagen del Producto
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
@@ -213,69 +210,61 @@ class _CartItemTile extends StatelessWidget {
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
-                errorBuilder: (c, o, s) =>
+                errorBuilder: (_, __, ___) =>
                     const Icon(Icons.broken_image, size: 60),
               ),
             ),
             const SizedBox(width: 12),
-
-            // Detalles del Producto
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     item.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '\$${item.price.toStringAsFixed(2)} c/u',
-                    style: TextStyle(color: Colors.grey[600]!, fontSize: 12),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
             ),
-
-            // Control de Cantidad
             Row(
               children: [
-                _buildQuantityButton(
+                _QtyButton(
                   icon: Icons.remove,
-                  onTap: () {
-                    bloc.add(UpdateQuantity(item.id, item.quantity - 1));
-                  },
+                  onTap: () => bloc.add(
+                    UpdateQuantity(item.id, item.quantity - 1),
+                  ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
                     '${item.quantity}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                _buildQuantityButton(
+                _QtyButton(
                   icon: Icons.add,
-                  onTap: () {
-                    bloc.add(UpdateQuantity(item.id, item.quantity + 1));
-                  },
+                  onTap: () => bloc.add(
+                    UpdateQuantity(item.id, item.quantity + 1),
+                  ),
                 ),
               ],
             ),
-
-            // Total por artículo
-            Padding(
-              padding: const EdgeInsets.only(left: 12.0),
-              child: Text(
-                '\$${(item.price * item.quantity).toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
+            const SizedBox(width: 12),
+            Text(
+              '\$${(item.price * item.quantity).toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
               ),
             ),
           ],
@@ -283,20 +272,27 @@ class _CartItemTile extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildQuantityButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+/* ───────────────────────── QTY BUTTON ───────────────────────── */
+
+class _QtyButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _QtyButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: Colors.grey[200]!,
+          color: Colors.grey[200],
           borderRadius: BorderRadius.circular(6),
         ),
-        child: Icon(icon, size: 16, color: Colors.black87),
+        child: Icon(icon, size: 16),
       ),
     );
   }

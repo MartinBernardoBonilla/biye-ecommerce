@@ -1,48 +1,147 @@
-// Asumo que asyncHandler está en src/middleware o src/utils, ajusta la ruta si es necesario.
-import asyncHandler from '../middleware/asyncHandler.middleware.js'; 
-import Order from '../models/Order.js'; 
-// Importa cualquier otro modelo necesario (e.g., Producto o Usuario si es requerido)
+import asyncHandler from '../middleware/asyncHandler.middleware.js';
+import Order from '../models/Order.js';
+import Product from '../models/Product.model.js';
+
+export const createOrder = asyncHandler(async (req, res) => {
+  const { items, buyerInfo, currency } = req.body;
+
+  // Validaciones básicas
+  if (!items || items.length === 0) {
+    res.status(400);
+    throw new Error('El pedido no contiene artículos');
+  }
+
+  if (!buyerInfo || !buyerInfo.email) {
+    res.status(400);
+    throw new Error('buyerInfo.email es obligatorio');
+  }
+
+  // Traer productos reales
+  const products = await Product.find({
+    _id: { $in: items.map(i => i.productId) },
+  });
+
+  let itemsPrice = 0;
+  let totalAmount = 0;
+
+  const orderItems = items.map(item => {
+    const product = products.find(
+      p => p._id.toString() === item.productId
+    );
+
+    if (!product) {
+      throw new Error('Producto inválido en el pedido');
+    }
+
+    const lineTotal = product.price * item.quantity;
+
+    itemsPrice += lineTotal;
+    totalAmount += lineTotal;
+
+    return {
+      productId: product._id,
+      name: product.name,
+      quantity: item.quantity,
+      unitPrice: product.price,
+      imageUrl: product.image?.url || '',
+    };
+  });
+
+  const order = await Order.create({
+    user: req.user._id,
+    items: orderItems,
+    itemsPrice,
+    totalAmount,
+    currency,
+    buyerInfo,
+    status: 'WAITING_PAYMENT',
+    status: 'PENDING',
+  });
+
+  res.status(201).json(order);
+});
 
 // @desc    Obtener todas las órdenes del usuario autenticado
 // @route   GET /api/v1/orders/myorders
-// @access  Private (Usuario)
+// @access  Private
 export const getMyOrders = asyncHandler(async (req, res) => {
-    // Buscar órdenes donde el campo 'user' coincida con el ID del usuario autenticado (req.user._id)
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+  const orders = await Order.find({ user: req.user._id })
+    .sort({ createdAt: -1 });
 
-    if (orders) {
-        res.status(200).json(orders);
-    } else {
-        res.status(404);
-        throw new Error('No se encontraron órdenes para este usuario.');
-    }
+  res.status(200).json(orders);
 });
 
-// @desc    Obtener detalles de una orden por ID
+// @desc    Obtener una orden por ID
 // @route   GET /api/v1/orders/:id
-// @access  Private (Usuario)
+// @access  Private
 export const getOrderById = asyncHandler(async (req, res) => {
-    // Buscar la orden por ID, asegurando que sea del usuario correcto.
-    const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id)
+    .populate('items.productId', 'name image price');
 
-    if (order && order.user.toString() === req.user._id.toString()) {
-        res.status(200).json(order);
-    } else {
-        res.status(404);
-        throw new Error('Orden no encontrada o no pertenece a este usuario.');
-    }
+  if (!order || order.user.toString() !== req.user._id.toString()) {
+    res.status(404);
+    throw new Error('Orden no encontrada o no pertenece a este usuario');
+  }
+
+  res.status(200).json(order);
 });
 
-
-// @desc    Obtener todas las órdenes (solo para Administradores)
+// @desc    Obtener todas las órdenes (Admin)
 // @route   GET /api/v1/orders
 // @access  Private/Admin
 export const getAllOrders = asyncHandler(async (req, res) => {
-    // Implementación simple: obtener todas las órdenes.
-    // Usamos .populate('user', 'id name') para incluir el nombre del usuario.
-    const orders = await Order.find({}).populate('user', 'id name').sort({ createdAt: -1 });
-    
-    res.status(200).json(orders);
+  const orders = await Order.find({})
+    .populate('user', 'id name')
+    .sort({ createdAt: -1 });
+
+  res.status(200).json(orders);
 });
 
-// Nota: Puedes añadir aquí otras funciones de controlador (e.g., addOrderItems, updateOrderToPaid)
+// @desc    Marcar orden como pagada
+// @route   PUT /api/v1/orders/:id/pay
+// @access  Private/Admin
+export const updateOrderToPaid = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    res.status(404);
+    throw new Error('Orden no encontrada');
+  }
+
+  order.status = 'PAID';
+  order.paidAt = Date.now();
+  order.paymentDetails = {
+    paymentId: req.body.paymentId,
+    preferenceId: req.body.preferenceId,
+    method: 'mercadopago',
+    statusDetail: req.body.statusDetail,
+  };
+
+  const updatedOrder = await order.save();
+  res.json(updatedOrder);
+});
+export const getOrderStatus = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    res.status(404);
+    throw new Error('Orden no encontrada');
+  }
+
+  // Seguridad: solo dueño o admin
+  if (
+    order.user.toString() !== req.user._id.toString() &&
+    req.user.role !== 'admin'
+  ) {
+    res.status(403);
+    throw new Error('No autorizado');
+  }
+
+  res.json({
+    success: true,
+    status: order.status,
+    paidAt: order.paidAt,
+    paymentDetails: order.paymentDetails,
+  });
+});
+

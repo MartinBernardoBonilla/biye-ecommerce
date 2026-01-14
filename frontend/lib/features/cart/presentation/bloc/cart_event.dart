@@ -5,7 +5,7 @@ abstract class CartEvent extends Equatable {
   const CartEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class AddToCart extends CartEvent {
@@ -13,7 +13,7 @@ class AddToCart extends CartEvent {
   const AddToCart(this.item);
 
   @override
-  List<Object> get props => [item];
+  List<Object?> get props => [item];
 }
 
 class RemoveFromCart extends CartEvent {
@@ -21,14 +21,11 @@ class RemoveFromCart extends CartEvent {
   const RemoveFromCart(this.itemId);
 
   @override
-  List<Object> get props => [itemId];
+  List<Object?> get props => [itemId];
 }
 
-class ClearCart extends CartEvent {}
-
-// Nuevo Evento para iniciar el flujo de pago con Mercado Pago
-class StartCheckout extends CartEvent {
-  const StartCheckout();
+class ClearCart extends CartEvent {
+  const ClearCart();
 }
 
 class UpdateQuantity extends CartEvent {
@@ -37,5 +34,15 @@ class UpdateQuantity extends CartEvent {
   const UpdateQuantity(this.itemId, this.quantity);
 
   @override
-  List<Object> get props => [itemId, quantity];
+  List<Object?> get props => [itemId, quantity];
+}
+
+/// ✅ ESTE ES EL EVENTO BUENO
+class StartCheckout extends CartEvent {
+  final String orderId;
+
+  const StartCheckout({required this.orderId});
+
+  @override
+  List<Object?> get props => [orderId];
 }

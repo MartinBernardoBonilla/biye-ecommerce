@@ -32,7 +32,7 @@ const OrderSchema = new mongoose.Schema({
     user: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: false 
+        required: true 
     },
     
     items: {
@@ -45,6 +45,12 @@ const OrderSchema = new mongoose.Schema({
             message: 'Un pedido debe contener al menos un artículo.'
         }
     },
+
+    itemsPrice: {
+        type: Number,
+        required: true,
+    },
+
     
     totalAmount: {
         type: Number,
