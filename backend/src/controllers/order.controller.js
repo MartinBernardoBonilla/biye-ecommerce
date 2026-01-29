@@ -48,7 +48,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   });
 
   const order = await Order.create({
-    user: req.user._id,
+    user: req.user?._id || null, // 👈 CLAVE
     items: orderItems,
     itemsPrice,
     totalAmount,
@@ -75,16 +75,29 @@ export const getMyOrders = asyncHandler(async (req, res) => {
 // @route   GET /api/v1/orders/:id
 // @access  Private
 export const getOrderById = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id)
-    .populate('items.productId', 'name image price');
+  const { id } = req.params;
 
-  if (!order || order.user.toString() !== req.user._id.toString()) {
-    res.status(404);
-    throw new Error('Orden no encontrada o no pertenece a este usuario');
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ success: false });
   }
 
-  res.status(200).json(order);
+  const order = await Order.findById(id);
+
+  if (!order) {
+    return res.status(404).json({ success: false });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      id: order._id,
+      status: order.status,
+      totalAmount: order.totalAmount,
+      paidAt: order.paidAt,
+    },
+  });
 });
+
 
 // @desc    Obtener todas las órdenes (Admin)
 // @route   GET /api/v1/orders

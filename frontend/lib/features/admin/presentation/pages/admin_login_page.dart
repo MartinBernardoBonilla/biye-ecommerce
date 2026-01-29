@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:biye/features/admin/presentation/pages/admin_panel_page.dart';
 
 class AdminLoginPage extends StatefulWidget {
   const AdminLoginPage({super.key});
@@ -22,20 +23,14 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Simular proceso de login
       await Future.delayed(const Duration(seconds: 2));
-      
-      // TODO: Conectar con backend real
-      // final response = await AuthService.login(
-      //   _emailController.text,
-      //   _passwordController.text,
-      //   isAdmin: true,
-      // );
-      
-      // Por ahora, navegar directamente al panel
-      if (_emailController.text.contains('@') && 
+
+      if (_emailController.text.contains('@') &&
           _passwordController.text.isNotEmpty) {
-        Navigator.pushReplacementNamed(context, '/admin/panel');
+        Navigator.pushReplacementNamed(
+          context,
+          AdminPanelPage.routeName,
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -44,10 +39,13 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
           ),
         );
       }
-    } catch (error) {
+    } catch (error, stack) {
+      debugPrint('🔥 ADMIN LOGIN ERROR: $error');
+      debugPrintStack(stackTrace: stack);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: \$error'),
+          content: Text(error.toString()),
           backgroundColor: Colors.red,
         ),
       );
@@ -92,7 +90,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       color: Colors.blue,
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Título
                     const Text(
                       'Panel de Administración',
@@ -108,7 +106,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Campo email
                     TextFormField(
                       controller: _emailController,
@@ -129,7 +127,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Campo password
                     TextFormField(
                       controller: _passwordController,
@@ -141,7 +139,8 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                               ? Icons.visibility_off
                               : Icons.visibility),
                           onPressed: () {
-                            setState(() => _obscurePassword = !_obscurePassword);
+                            setState(
+                                () => _obscurePassword = !_obscurePassword);
                           },
                         ),
                         border: const OutlineInputBorder(),
@@ -158,7 +157,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       },
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Botón de login
                     SizedBox(
                       width: double.infinity,
@@ -186,7 +185,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Credenciales de prueba
                     Card(
                       color: Colors.grey[50],

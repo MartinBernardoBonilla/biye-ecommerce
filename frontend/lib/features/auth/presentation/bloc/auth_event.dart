@@ -1,5 +1,5 @@
-// lib/features/auth/presentation/bloc/auth_event.dart
 import 'package:equatable/equatable.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 abstract class AuthEvent extends Equatable {
   @override
@@ -44,6 +44,11 @@ class AuthPasswordResetRequested extends AuthEvent {
 
   @override
   List<Object> get props => [email];
+}
+
+class AuthUserChanged extends AuthEvent {
+  final User? user;
+  AuthUserChanged(this.user);
 }
 
 class AuthEmailVerificationRequested extends AuthEvent {}

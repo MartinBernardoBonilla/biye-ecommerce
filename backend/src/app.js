@@ -47,7 +47,12 @@ const corsOptions = {
     maxAge: 86400, // 24 horas
 };
 
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: '*', // en dev
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.options('*', cors(corsOptions));
 
 

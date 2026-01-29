@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // 👈 ESTA ES LA QUE FALTA para kDebugMode
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+import 'shared/utils/network_test.dart';
+
+// PROVIDER
 import 'package:provider/provider.dart';
 
-// Importaciones de tus servicios y páginas
+import '../../../../core/network/api_client.dart';
+
+// CORE
+import 'core/navigation/navigator_key.dart';
+import 'core/utils/payment_deep_link_handler.dart';
+
+// ADMIN
 import 'package:biye/features/admin/data/services/admin_service.dart';
 import 'package:biye/features/admin/presentation/pages/admin_login_page.dart';
 import 'package:biye/features/admin/presentation/pages/admin_panel_page.dart';
@@ -11,18 +24,32 @@ import 'package:biye/features/admin/presentation/pages/product_management_page.d
 import 'package:biye/features/admin/presentation/pages/admin_create_product_page.dart';
 import 'package:biye/features/admin/presentation/pages/admin_edit_product_page.dart';
 import 'package:biye/features/admin/presentation/pages/admin_dashboard_page.dart';
+
+// AUTH
+import 'package:biye/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:biye/features/auth/presentation/login_screen.dart';
 import 'package:biye/features/auth/presentation/registration_screen.dart';
+
+// CART / ORDER / PAYMENT
 import 'package:biye/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:biye/features/home/presentation/home_screen.dart';
-import 'shared/utils/network_test.dart';
+import 'package:biye/features/order/data/services/order_service.dart';
 import 'package:biye/features/payment/data/services/mercadopago_service.dart';
 
-void main() {
-  // Asegurar que Flutter esté inicializado antes de las pruebas
+// HOME
+import 'package:biye/features/home/presentation/home_screen.dart';
+
+// PAYMENT RESULT
+import 'package:biye/features/payment/presentation/pages/payment_success_page.dart';
+import 'package:biye/features/payment/presentation/pages/payment_pending_page.dart';
+import 'package:biye/features/payment/presentation/pages/payment_failure_page.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Probar conexión al iniciar (solo en desarrollo)
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   if (kDebugMode) {
     NetworkTest.runTest();
   }
@@ -30,50 +57,93 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PaymentDeepLinkHandler.initialize(navigatorKey);
+    });
+  }
+
+  @override
+  void dispose() {
+    PaymentDeepLinkHandler.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // 👈 Aquí instanciamos la clase AdminService correctamente
-        Provider(create: (_) => AdminService()),
-        BlocProvider(
-          create: (_) => CartBloc(
-            mercadoPagoService: MercadoPagoService(
-              baseUrl: kDebugMode
-                  ? 'https://TU-NGROK.ngrok-free.app'
-                  : 'https://api.biye.com',
-              token: '', // 👈 luego lo vamos a conectar con auth
-            ),
+        Provider<ApiClient>(
+          create: (_) => ApiClient(),
+        ),
+        Provider<AdminService>(
+          create: (context) => AdminService(
+            apiClient: context.read<ApiClient>(),
           ),
         ),
       ],
-      child: MaterialApp(
-        title: 'Biye',
-        debugShowCheckedModeBanner: false, // Quita el banner de debug
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(
+            create: (context) => AuthBloc(
+              apiClient: context.read<ApiClient>(),
+            ),
+          ),
+          BlocProvider<CartBloc>(
+            create: (context) => CartBloc(
+              authBloc: context.read<AuthBloc>(),
+              mercadoPagoService: MercadoPagoService(
+                baseUrl: kDebugMode
+                    ? 'https://shanae-shearless-rakishly.ngrok-free.dev'
+                    : 'https://api.biye.com',
+                token: '',
+              ),
+              orderService: OrderService(
+                baseUrl: kDebugMode
+                    ? 'https://shanae-shearless-rakishly.ngrok-free.dev'
+                    : 'https://api.biye.com',
+                token: '',
+              ),
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'Biye',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(primarySwatch: Colors.blue),
+          initialRoute: '/',
+          routes: {
+            '/': (_) => const HomeScreen(),
+            '/login': (_) => const LoginScreen(),
+            '/register': (_) => const RegistrationScreen(),
+
+            // ADMIN
+            AdminLoginPage.routeName: (_) => const AdminLoginPage(),
+            AdminPanelPage.routeName: (_) => const AdminPanelPage(),
+            ProductManagementPage.routeName: (_) =>
+                const ProductManagementPage(),
+            AdminCreateProductPage.routeName: (_) =>
+                const AdminCreateProductPage(),
+            AdminEditProductPage.routeName: (_) => const AdminEditProductPage(),
+            AdminDashboardPage.routeName: (_) => const AdminDashboardPage(),
+
+            // PAYMENT RESULT
+            '/checkout/success': (_) => const PaymentSuccessPage(),
+            '/checkout/pending': (_) => const PaymentPendingPage(),
+            '/checkout/failure': (_) => const PaymentFailurePage(),
+          },
         ),
-        initialRoute: '/',
-        routes: {
-          '/': (context) => const HomeScreen(),
-          '/login': (context) => const LoginScreen(),
-          '/register': (context) => const RegistrationScreen(),
-          AdminLoginPage.routeName: (context) => const AdminLoginPage(),
-          AdminPanelPage.routeName: (context) => const AdminPanelPage(),
-          AdminDashboardPage.routeName: (context) => const AdminDashboardPage(),
-          ProductManagementPage.routeName: (context) =>
-              const ProductManagementPage(),
-          AdminCreateProductPage.routeName: (context) =>
-              const AdminCreateProductPage(),
-          // Nota: AdminEditProductPage suele requerir argumentos,
-          // asegúrate de pasarlos en el Navigator.
-          AdminEditProductPage.routeName: (context) =>
-              const AdminEditProductPage(),
-        },
       ),
     );
   }

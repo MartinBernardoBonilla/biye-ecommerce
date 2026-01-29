@@ -24,13 +24,14 @@ class CartPage extends StatelessWidget {
       body: BlocConsumer<CartBloc, CartState>(
         listener: (context, state) async {
           // ✅ Checkout OK → abrir Mercado Pago
-          if (state is CheckoutSuccessState) {
-            final Uri uri = Uri.parse(state.initPoint);
+          if (state.initPoint != null) {
+            final Uri uri = Uri.parse(state.initPoint!);
 
             if (await canLaunchUrl(uri)) {
               await launchUrl(
                 uri,
-                mode: LaunchMode.externalApplication,
+                mode: LaunchMode.platformDefault,
+                webOnlyWindowName: '_self',
               );
             } else {
               if (context.mounted) {
@@ -148,11 +149,7 @@ class _CheckoutSummary extends StatelessWidget {
             onPressed: state.isCheckoutLoading
                 ? null
                 : () {
-                    context.read<CartBloc>().add(
-                          const StartCheckout(
-                            orderId: 'ORDER_TEST_001',
-                          ),
-                        );
+                    context.read<CartBloc>().add(StartCheckout());
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.yellow[700],

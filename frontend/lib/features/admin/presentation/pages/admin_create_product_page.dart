@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../data/services/admin_service.dart';
 
 class AdminCreateProductPage extends StatefulWidget {
-  static const routeName = '/admin-create-product';
+  static const String routeName = '/admin/create-product';
 
   const AdminCreateProductPage({super.key});
 
@@ -78,18 +78,15 @@ class _AdminCreateProductPageState extends State<AdminCreateProductPage> {
       try {
         final adminService = Provider.of<AdminService>(context, listen: false);
 
-        await adminService.addProduct(
+        await adminService.createProduct(
           name: _nameController.text,
           price: double.parse(_priceController.text),
           description: _descriptionController.text,
           category: _categoryController.text,
-          imageBytes: _imageBytes,
-          fileName: _pickedImage?.name,
           countInStock: int.parse(_stockController.text),
-          context: context,
         );
 
-        if (mounted) Navigator.of(context).pop();
+        if (mounted) Navigator.of(context).pop(true);
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

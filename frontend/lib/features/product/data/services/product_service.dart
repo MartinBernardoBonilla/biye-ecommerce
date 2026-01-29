@@ -19,7 +19,8 @@ class ProductService {
 
       print('📥 [DEBUG] Status: ${response.statusCode}');
       print(
-          '📥 [DEBUG] Body: ${response.body.length > 200 ? "${response.body.substring(0, 200)}..." : response.body}');
+        '📥 [DEBUG] Body: ${response.body.length > 200 ? "${response.body.substring(0, 200)}..." : response.body}',
+      );
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
@@ -28,7 +29,8 @@ class ProductService {
         print('📊 [DEBUG] Has data: ${jsonResponse.containsKey('data')}');
         print('📊 [DEBUG] Data type: ${jsonResponse['data']?.runtimeType}');
         print(
-            '📊 [DEBUG] Data length: ${(jsonResponse['data'] as List?)?.length ?? 0}');
+          '📊 [DEBUG] Data length: ${(jsonResponse['data'] as List?)?.length ?? 0}',
+        );
 
         if (jsonResponse['success'] == true && jsonResponse['data'] is List) {
           final products = (jsonResponse['data'] as List).map((item) {
@@ -40,7 +42,8 @@ class ProductService {
 
           if (products.isNotEmpty && products[0].image != null) {
             print(
-                '🖼️ [DEBUG] Primer producto imagen URL: ${products[0].image!.url}');
+              '🖼️ [DEBUG] Primer producto imagen URL: ${products[0].image!.url}',
+            );
           } else if (products.isNotEmpty) {
             print('🖼️ [DEBUG] Primer producto sin imagen');
           }
@@ -87,5 +90,3 @@ class ProductService {
     }
   }
 }
-
-final productService = ProductService();

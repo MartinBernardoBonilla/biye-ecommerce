@@ -3,12 +3,19 @@ import 'package:biye/features/cart/domain/entities/cart_item.dart';
 import 'cart_event.dart';
 import 'cart_state.dart';
 import 'package:biye/features/payment/data/services/mercadopago_service.dart';
+import 'package:biye/features/order/data/services/order_service.dart';
+import 'package:biye/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:biye/features/auth/presentation/bloc/auth_state.dart';
 
 class CartBloc extends Bloc<CartEvent, CartState> {
   final MercadoPagoService mercadoPagoService;
+  final OrderService orderService;
+  final AuthBloc? authBloc;
 
   CartBloc({
     required this.mercadoPagoService,
+    required this.orderService,
+    this.authBloc,
   }) : super(CartState.initial()) {
     on<AddToCart>(_onAddToCart);
     on<RemoveFromCart>(_onRemoveFromCart);
@@ -58,27 +65,41 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     StartCheckout event,
     Emitter<CartState> emit,
   ) async {
-    if (state.items.isEmpty) {
-      emit(
-        CheckoutErrorState(
-          state: state,
-          message: 'El carrito está vacío',
-        ),
-      );
-      return;
-    }
-
     emit(CheckoutLoadingState(state: state));
 
     try {
-      final initPoint = await mercadoPagoService.createPaymentPreference(
-        event.orderId,
+      final authState = authBloc?.state;
+
+      String buyerName = 'Invitado';
+      String buyerEmail = 'invitado@biye.app';
+
+      if (authState is AuthAuthenticated) {
+        final user = authState.user;
+        final userData = authState.userData;
+
+        buyerName =
+            userData?['firstName'] ?? user.email?.split('@').first ?? 'Usuario';
+
+        buyerEmail = user.email ?? buyerEmail;
+      }
+
+      // 1️⃣ Crear orden en backend
+      final orderId = await orderService.createOrder(
+        items: _mapCartItemsToOrderItems(),
+        buyerName: buyerName,
+        buyerEmail: buyerEmail,
       );
 
+      // 2️⃣ Crear preferencia Mercado Pago
+      final checkoutUrl =
+          await mercadoPagoService.createPaymentPreference(orderId);
+
+      // 3️⃣ Éxito → la UI abre el checkout
       emit(
-        CheckoutSuccessState(
-          state: state,
-          initPoint: initPoint,
+        state.copyWith(
+          isCheckoutLoading: false,
+          initPoint: checkoutUrl,
+          checkoutError: null,
         ),
       );
     } catch (e) {
@@ -103,8 +124,16 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         total: total,
         isCheckoutLoading: false,
         checkoutError: null,
-        initPoint: null,
       ),
     );
+  }
+
+  List<Map<String, dynamic>> _mapCartItemsToOrderItems() {
+    return state.items.map((item) {
+      return {
+        'productId': item.id,
+        'quantity': item.quantity,
+      };
+    }).toList();
   }
 }

@@ -6,15 +6,32 @@ class ApiClient {
   final http.Client _client = http.Client();
   final String _baseUrl = AppConstants.apiBaseUrl;
 
-  // Headers para CORS en desarrollo web
+  // 1. Variable para guardar el token en memoria
+  String? _authToken;
+
+  // 2. Método para que el AuthBloc le pase el token al loguearse
+  void updateToken(String? token) {
+    _authToken = token;
+
+    if (_authToken != null) {
+      print('🟢 AUTH HEADER SENT: Bearer $_authToken');
+    }
+  }
+
   Map<String, String> get _headers {
-    return <String, String>{
+    final headers = <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
-      // Headers CORS importantes para web
-      'Origin': 'http://localhost:42321',
-      'Access-Control-Request-Method': 'GET,POST,PUT,DELETE,OPTIONS',
     };
+
+    if (_authToken != null && _authToken!.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $_authToken';
+      print('🟢 API CLIENT → ENVIANDO TOKEN: $_authToken');
+    } else {
+      print('🔴 API CLIENT → NO HAY TOKEN');
+    }
+
+    return headers;
   }
 
   // Método GET (¡TE FALTA ESTO!)

@@ -14,7 +14,7 @@ import { protect, admin } from '../middleware/auth.middleware.js';
 const router = Router();
 
 // Usuario autenticado
-router.post('/', protect, createOrder);
+router.post('/', createOrder);
 router.get('/myorders', protect, getMyOrders);
 router.get('/:id', protect, getOrderById);
 router.get('/:id/status', protect, getOrderStatus);

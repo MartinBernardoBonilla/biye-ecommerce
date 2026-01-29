@@ -1,6 +1,5 @@
 import '../../../../core/errors/exceptions.dart';
 import '../models/user_model.dart';
-
 import '../../../../core/network/api_client.dart';
 
 abstract class AuthRemoteDataSource {
@@ -16,13 +15,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel> login(String email, String password) async {
     try {
-      final response = await apiClient.post('auth/login', {
-        'email': email,
-        'password': password,
-      });
-      return UserModel.fromJson(response);
+      final response = await apiClient.post(
+        'auth/login',
+        {
+          'email': email,
+          'password': password,
+        },
+      );
+
+      if (response['success'] != true || response['data'] == null) {
+        throw ServerException(message: 'Respuesta inválida del servidor');
+      }
+
+      return UserModel.fromJson(response['data']);
     } catch (e) {
-      throw ServerException(message: 'Error de conexión con el servidor: $e');
+      throw ServerException(
+        message: 'Error de conexión con el servidor: $e',
+      );
     }
   }
 
@@ -33,14 +42,24 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     String password,
   ) async {
     try {
-      final response = await apiClient.post('auth/register', {
-        'username': username,
-        'email': email,
-        'password': password,
-      });
-      return UserModel.fromJson(response);
+      final response = await apiClient.post(
+        'auth/register',
+        {
+          'username': username,
+          'email': email,
+          'password': password,
+        },
+      );
+
+      if (response['success'] != true || response['data'] == null) {
+        throw ServerException(message: 'Respuesta inválida del servidor');
+      }
+
+      return UserModel.fromJson(response['data']);
     } catch (e) {
-      throw ServerException(message: 'Error de conexión con el servidor: $e');
+      throw ServerException(
+        message: 'Error de conexión con el servidor: $e',
+      );
     }
   }
 }

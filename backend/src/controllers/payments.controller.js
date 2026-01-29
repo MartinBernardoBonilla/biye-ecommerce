@@ -5,11 +5,12 @@ import Order from '../models/Order.js';
 import asyncHandler from '../middleware/asyncHandler.middleware.js';
 
 /**
- * Crear preferencia MercadoPago desde una orden existente
+ * Crear preferencia de Mercado Pago a partir de una orden
  */
 export const createMercadoPagoPreference = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
 
+  // Validar ObjectId
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     return res.status(400).json({
       success: false,
@@ -17,6 +18,7 @@ export const createMercadoPagoPreference = asyncHandler(async (req, res) => {
     });
   }
 
+  // Buscar orden
   const order = await Order.findById(orderId);
   if (!order) {
     return res.status(404).json({
@@ -25,52 +27,60 @@ export const createMercadoPagoPreference = asyncHandler(async (req, res) => {
     });
   }
 
-  if (order.paymentDetails?.preferenceId) {
-    return res.status(400).json({
-      success: false,
-      message: 'La orden ya tiene una preferencia creada',
-    });
-  }
-
+  // Crear preferencia
   const preference = new Preference(mpClient);
 
   const body = {
-    items: order.items.map(item => ({
+    items: order.items.map((item) => ({
       title: item.name,
-      unit_price: item.unitPrice,
       quantity: item.quantity,
-      currency_id: order.currency,
+      unit_price: item.unitPrice,
+      currency_id: 'ARS',
     })),
+
     payer: {
       email: order.buyerInfo.email,
     },
+
     external_reference: order._id.toString(),
+
     back_urls: {
       success: `${process.env.FRONTEND_URL}/checkout/success`,
       failure: `${process.env.FRONTEND_URL}/checkout/failure`,
       pending: `${process.env.FRONTEND_URL}/checkout/pending`,
     },
-    notification_url: `${process.env.NGROK_BASE_URL}/api/v1/payments/mercadopago/webhook`,
+
+    auto_return: 'approved',
+
+    notification_url: `${process.env.NGROK_BASE_URL}/api/v1/payments/webhook`,
   };
 
-  const result = await preference.create({ body });
+const result = await preference.create({ body });
 
-  order.paymentDetails = {
-    preferenceId: result.id,
-    method: 'mercadopago',
-  };
-  order.status = 'WAITING_PAYMENT';
-  await order.save();
+// Guardar info de pago en la orden
+order.paymentDetails = {
+  method: 'mercadopago',
+  preferenceId: result.id,
+};
+order.status = 'WAITING_PAYMENT';
+await order.save();
 
-  res.json({
-    success: true,
-    preferenceId: result.id,
-    initPoint: result.init_point,
-  });
+// 🔴 ESTE ES EL PUNTO CLAVE
+const checkoutUrl =
+  process.env.NODE_ENV === 'production'
+    ? result.init_point
+    : result.sandbox_init_point;
+
+res.status(200).json({
+  success: true,
+  preferenceId: result.id,
+  checkoutUrl,
+});
+
 });
 
 /**
- * Webhook MercadoPago
+ * Webhook Mercado Pago
  */
 export const mercadoPagoWebhook = asyncHandler(async (req, res) => {
   const paymentId =
@@ -83,7 +93,7 @@ export const mercadoPagoWebhook = asyncHandler(async (req, res) => {
   const payment = new Payment(mpClient);
   const info = await payment.get({ id: paymentId });
 
-  const orderId = info.external_reference;
+  const orderId = info.body.external_reference;
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     return res.sendStatus(200);
   }
@@ -91,17 +101,24 @@ export const mercadoPagoWebhook = asyncHandler(async (req, res) => {
   const order = await Order.findById(orderId);
   if (!order) return res.sendStatus(200);
 
-  if (info.status === 'approved') {
+  const status = info.body.status;
+
+  if (status === 'approved') {
     order.status = 'PAID';
     order.paidAt = new Date();
+  } else if (status === 'rejected') {
+    order.status = 'REJECTED';
+  } else {
+    order.status = 'WAITING_PAYMENT';
   }
 
   order.paymentDetails = {
     ...order.paymentDetails,
-    paymentId: info.id,
-    statusDetail: info.status,
+    paymentId: info.body.id,
+    statusDetail: status,
   };
 
   await order.save();
+
   res.sendStatus(200);
 });

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "312634462857",
+    "project_id": "biye-49f1f",
+    "storage_bucket": "biye-49f1f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:312634462857:android:ae0f0012246c9cd74c6c58",
+        "android_client_info": {
+          "package_name": "com.example.biye"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDc90IKMUTtVWiTivQ8caX1PU82XG--Zmw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

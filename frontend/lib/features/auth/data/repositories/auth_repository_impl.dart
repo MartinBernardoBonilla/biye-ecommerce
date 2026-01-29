@@ -6,18 +6,27 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/exceptions.dart' as ex;
 import '../../../../core/errors/failures.dart' as fl;
 import '../../../cart/domain/entities/user.dart';
+import '../../../../core/network/api_client.dart';
 
 /// Implementación del repositorio de autenticación.
 /// Llama al [AuthRemoteDataSource] para login y registro.
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
+  final ApiClient apiClient;
 
-  AuthRepositoryImpl({required this.remoteDataSource});
+  AuthRepositoryImpl({
+    required this.remoteDataSource,
+    required this.apiClient,
+  });
 
   @override
   Future<Either<fl.Failure, User>> login(String email, String password) async {
     try {
       final UserModel userModel = await remoteDataSource.login(email, password);
+
+      // 🔑 ESTE ERA EL ESLABÓN PERDIDO
+      apiClient.updateToken(userModel.token);
+
       return Right(userModel);
     } on ex.ServerException catch (e) {
       return Left(fl.ServerFailure(message: e.message));

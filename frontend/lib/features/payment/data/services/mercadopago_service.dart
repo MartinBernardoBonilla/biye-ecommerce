@@ -29,6 +29,8 @@ class MercadoPagoService {
     }
 
     final data = json.decode(response.body);
-    return data['initPoint'];
+
+    // 🔥 ESTA ERA LA LÍNEA ROTA
+    return data['checkoutUrl'];
   }
 }

@@ -12,7 +12,7 @@ dependencies:
 
   # UI & Icons
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.1.0
+  google_fonts: ^7.1.0
   carousel_slider: ^5.1.1
   flutter_svg: ^2.0.9
   shimmer: ^3.0.0
@@ -24,6 +24,8 @@ dependencies:
   bloc: ^9.0.0
   flutter_bloc: ^9.1.1
   hydrated_bloc: ^10.1.1
+  uni_links: ^0.5.1
+  app_links: ^7.0.0
 
   # Firebase
   firebase_core: ^4.1.0

@@ -19,6 +19,10 @@ export const protect = asyncHandler(async (req, res, next) => {
     throw new Error('No autorizado, no se encontró token');
   }
 
+  console.log('🧪 RAW AUTH HEADER:', req.headers.authorization);
+  console.log('🧪 TOKEN STRING:', token);
+
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

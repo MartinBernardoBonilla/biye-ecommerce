@@ -37,12 +37,6 @@ class UpdateQuantity extends CartEvent {
   List<Object?> get props => [itemId, quantity];
 }
 
-/// ✅ ESTE ES EL EVENTO BUENO
-class StartCheckout extends CartEvent {
-  final String orderId;
+class StartCheckout extends CartEvent {}
 
-  const StartCheckout({required this.orderId});
-
-  @override
-  List<Object?> get props => [orderId];
-}
+class CartPaymentConfirmed extends CartEvent {}

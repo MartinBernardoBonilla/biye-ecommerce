@@ -5,6 +5,7 @@ class CartState extends Equatable {
   final List<CartItem> items;
   final double total;
   final bool isLoading;
+  final String? orderId;
 
   // Checkout
   final bool isCheckoutLoading;
@@ -15,6 +16,7 @@ class CartState extends Equatable {
     this.items = const [],
     this.total = 0.0,
     this.isLoading = false,
+    this.orderId,
     this.isCheckoutLoading = false,
     this.initPoint,
     this.checkoutError,
@@ -26,6 +28,7 @@ class CartState extends Equatable {
     List<CartItem>? items,
     double? total,
     bool? isLoading,
+    String? orderId,
     bool? isCheckoutLoading,
     String? initPoint,
     String? checkoutError,
@@ -34,6 +37,7 @@ class CartState extends Equatable {
       items: items ?? this.items,
       total: total ?? this.total,
       isLoading: isLoading ?? this.isLoading,
+      orderId: orderId ?? this.orderId,
       isCheckoutLoading: isCheckoutLoading ?? this.isCheckoutLoading,
       initPoint: initPoint,
       checkoutError: checkoutError,
@@ -45,6 +49,7 @@ class CartState extends Equatable {
         items,
         total,
         isLoading,
+        orderId,
         isCheckoutLoading,
         initPoint,
         checkoutError,
@@ -62,23 +67,6 @@ class CheckoutLoadingState extends CartState {
           total: state.total,
           isCheckoutLoading: true,
         );
-}
-
-class CheckoutSuccessState extends CartState {
-  final String initPoint;
-
-  CheckoutSuccessState({
-    required CartState state,
-    required this.initPoint,
-  }) : super(
-          items: state.items,
-          total: state.total,
-          isCheckoutLoading: false,
-          initPoint: initPoint,
-        );
-
-  @override
-  List<Object?> get props => [...super.props, initPoint];
 }
 
 class CheckoutErrorState extends CartState {

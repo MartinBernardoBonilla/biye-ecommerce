@@ -9,7 +9,7 @@ import 'admin_edit_product_page.dart';
 
 // ⭐️ SOLO UNA DEFINICIÓN DE ESTA CLASE
 class ProductManagementPage extends StatefulWidget {
-  static const routeName = '/admin-product-management';
+  static const String routeName = '/admin-product-management';
 
   const ProductManagementPage({super.key});
 
@@ -165,8 +165,10 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             onPressed: () {
               Navigator.of(context)
                   .pushNamed(AdminCreateProductPage.routeName)
-                  .then((_) {
-                if (mounted) _refreshProducts();
+                  .then((result) {
+                if (result == true && mounted) {
+                  _refreshProducts();
+                }
               });
             },
           ),
