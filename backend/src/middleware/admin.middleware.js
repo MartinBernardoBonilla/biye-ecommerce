@@ -1,8 +1,5 @@
 // Archivo: src/middleware/admin.middleware.js
 
-// NOTA: No necesitamos importar User aquí.
-// El objeto User ya viene en req.user, adjuntado por el middleware protect.
-
 // Middleware adminAuth
 export const adminAuth = (req, res, next) => {
     // 1. Log de debug para rastrear el rol
@@ -20,6 +17,3 @@ export const adminAuth = (req, res, next) => {
         }); 
     }
 };
-
-// Ya está exportado arriba como export const adminAuth, por lo que no necesitas esta línea:
-// export { adminAuth };

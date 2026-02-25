@@ -17,12 +17,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.apiClient,
   })  : _authService = kIsWeb ? null : (authService ?? FirebaseAuthService()),
         super(AuthInitial()) {
-    if (_authService != null) {
-      on<AuthStarted>(_onAuthStarted);
-      on<AuthLoginRequested>(_onLoginRequested);
-      on<AuthLogoutRequested>(_onLogoutRequested);
-      on<AuthUserChanged>(_onUserChanged);
+    // ✅ REGISTRAR SIEMPRE LOS EVENTS
+    on<AuthStarted>(_onAuthStarted);
+    on<AuthLoginRequested>(_onLoginRequested);
+    on<AuthLogoutRequested>(_onLogoutRequested);
+    on<AuthUserChanged>(_onUserChanged);
 
+    // 🔥 SOLO escuchar Firebase si existe
+    if (_authService != null) {
       _authService!.authStateChanges.listen(
         (user) => add(AuthUserChanged(user)),
       );
@@ -39,7 +41,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final user = _authService?.currentUser;
 
     if (user == null) {
-      apiClient.updateToken(null);
+      apiClient.clearToken();
       emit(AuthUnauthenticated());
     }
   }
@@ -56,6 +58,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
+      // 1️⃣ Login Firebase (solo validación UI)
       final result = await _authService!.signInWithEmailAndPassword(
         email: event.email,
         password: event.password,
@@ -63,16 +66,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       final User user = result.user!;
 
-      // 🔥 OBTENER TOKEN
-      final String? token = await user.getIdToken();
+      // 2️⃣ Login BACKEND (obtener JWT real)
+      final response = await apiClient.post(
+        'auth/login',
+        {
+          'email': event.email,
+          'password': event.password,
+        },
+      );
 
-      if (token == null || token.isEmpty) {
-        emit(AuthError(message: 'No se pudo obtener el token'));
+      final backendToken = response['data']['token'];
+
+      if (backendToken == null || backendToken.isEmpty) {
+        emit(AuthError(message: 'No se pudo obtener token del backend'));
         return;
       }
+      print('🧪 AuthBloc usando ApiClient: $apiClient');
 
-      // 🔥 GUARDAR TOKEN EN API CLIENT
-      apiClient.updateToken(token);
+      // 3️⃣ Guardar JWT del backend
+      apiClient.setToken(backendToken);
 
       emit(AuthAuthenticated(user: user));
     } catch (e) {
@@ -91,7 +103,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     await _authService!.signOut();
 
-    apiClient.updateToken(null);
+    apiClient.clearToken();
 
     emit(AuthUnauthenticated());
   }
@@ -106,11 +118,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final user = event.user;
 
     if (user == null) {
-      apiClient.updateToken(null);
+      apiClient.clearToken();
       emit(AuthUnauthenticated());
     } else {
-      final token = await user.getIdToken();
-      apiClient.updateToken(token);
+      // ⚠️ NO tocar token acá
       emit(AuthAuthenticated(user: user));
     }
   }

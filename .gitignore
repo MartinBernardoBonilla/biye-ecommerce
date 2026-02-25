@@ -4,6 +4,8 @@ node_modules/
 .env
 *.log
 package-lock.json
+firebase-service-account.json
+
 
 # --- Flutter / Dart ---
 .dart_tool/

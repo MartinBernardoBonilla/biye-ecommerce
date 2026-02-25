@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../../core/network/api_client.dart';
 import 'package:biye/features/product/data/models/product_model.dart';
 
@@ -9,12 +11,21 @@ class AdminService {
   // =========================
   // GET PRODUCTS
   // =========================
-  Future<List<ProductModel>> getAdminProducts() async {
-    final response = await apiClient.get('admin/products');
+  Future<List<ProductModel>> getAdminProducts(
+      {String endpoint = 'admin/products'}) async {
+    try {
+      final response = await apiClient.get(endpoint);
 
-    final List data = response['data'] ?? [];
-
-    return data.map((e) => ProductModel.fromJson(e)).toList();
+      if (response['success'] == true) {
+        final List<dynamic> data = response['data'] ?? [];
+        return data.map((json) => ProductModel.fromJson(json)).toList();
+      } else {
+        throw Exception(response['message'] ?? 'Error al cargar productos');
+      }
+    } catch (e) {
+      debugPrint('❌ Error en getAdminProducts: $e');
+      throw Exception('Error al cargar productos: $e');
+    }
   }
 
   // =========================
@@ -37,6 +48,7 @@ class AdminService {
     };
 
     await apiClient.post('admin/products', body);
+    print('🧪 AdminService usando ApiClient: $apiClient');
   }
 
   // =========================

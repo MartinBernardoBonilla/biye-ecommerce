@@ -41,7 +41,7 @@ export const updateProductStock = async (orderId, paymentInfo) => {
         // 4. DECREMENTAR EL STOCK DE CADA PRODUCTO EN LA ORDEN
         
         // Usamos un loop for...of para manejar operaciones asíncronas dentro (actualización de stock)
-        for (const item of order.orderItems) {
+        for (const item of order.items) {
             // El 'product' en item.product es el ObjectId del producto (gracias al esquema de Order)
             const productToUpdate = await Product.findById(item.product);
 

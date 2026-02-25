@@ -7,11 +7,14 @@ import '../../data/services/admin_service.dart';
 import 'admin_create_product_page.dart';
 import 'admin_edit_product_page.dart';
 
-// ⭐️ SOLO UNA DEFINICIÓN DE ESTA CLASE
+// ⭐️ AGREGAR ARGUMENTS PARA RECIBIR FILTROS
 class ProductManagementPage extends StatefulWidget {
   static const String routeName = '/admin-product-management';
 
-  const ProductManagementPage({super.key});
+  // 👇 NUEVO: Recibir argumentos de filtro
+  final Map<String, dynamic>? arguments;
+
+  const ProductManagementPage({super.key, this.arguments});
 
   @override
   State<ProductManagementPage> createState() => _ProductManagementPageState();
@@ -21,9 +24,15 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   late Future<List<ProductModel>> _productsFuture;
   bool _isLoading = false;
 
+  // 👇 NUEVO: Variable para el filtro actual
+  String? _currentFilter;
+
   @override
   void initState() {
     super.initState();
+    // 👇 NUEVO: Obtener filtro de los argumentos
+    _currentFilter = widget.arguments?['filter'];
+    debugPrint('🎯 [PRODUCTS] Filtro recibido: $_currentFilter');
     _loadProducts();
   }
 
@@ -31,9 +40,46 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     _productsFuture = _fetchProducts();
   }
 
+  // 👇 NUEVO: Modificado para incluir filtro en la URL
   Future<List<ProductModel>> _fetchProducts() async {
     final adminService = Provider.of<AdminService>(context, listen: false);
-    return adminService.getAdminProducts();
+
+    // Construir URL con filtro si existe
+    String endpoint = 'admin/products';
+    if (_currentFilter != null && _currentFilter!.isNotEmpty) {
+      endpoint += '?filter=$_currentFilter';
+    }
+
+    debugPrint('📦 [PRODUCTS] Cargando desde: $endpoint');
+    return adminService.getAdminProducts(endpoint: endpoint);
+  }
+
+  // 👇 NUEVO: Título dinámico según filtro
+  String _getTitle() {
+    switch (_currentFilter) {
+      case 'lowStock':
+        return 'Productos con Stock Bajo';
+      case 'outOfStock':
+        return 'Productos sin Stock';
+      case 'active':
+        return 'Productos Activos';
+      default:
+        return 'Gestión de Productos';
+    }
+  }
+
+  // 👇 NUEVO: Mensaje vacío según filtro
+  String _getEmptyMessage() {
+    switch (_currentFilter) {
+      case 'lowStock':
+        return 'No hay productos con stock bajo';
+      case 'outOfStock':
+        return 'No hay productos sin stock';
+      case 'active':
+        return 'No hay productos activos';
+      default:
+        return 'No hay productos cargados';
+    }
   }
 
   Future<void> _refreshProducts() async {
@@ -156,22 +202,36 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestión de Productos'),
+        title: Text(_getTitle()), // 👈 Título dinámico
         backgroundColor: Colors.teal,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            tooltip: 'Crear nuevo producto',
-            onPressed: () {
-              Navigator.of(context)
-                  .pushNamed(AdminCreateProductPage.routeName)
-                  .then((result) {
-                if (result == true && mounted) {
-                  _refreshProducts();
-                }
-              });
-            },
-          ),
+          // Mostrar botón de crear SOLO si no hay filtro o es 'active'
+          if (_currentFilter == null || _currentFilter == 'active')
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline),
+              tooltip: 'Crear nuevo producto',
+              onPressed: () {
+                Navigator.of(context)
+                    .pushNamed(AdminCreateProductPage.routeName)
+                    .then((result) {
+                  if (result == true && mounted) {
+                    _refreshProducts();
+                  }
+                });
+              },
+            ),
+          // Botón para limpiar filtro (volver a todos los productos)
+          if (_currentFilter != null)
+            IconButton(
+              icon: const Icon(Icons.clear_all),
+              tooltip: 'Ver todos los productos',
+              onPressed: () {
+                Navigator.pushReplacementNamed(
+                  context,
+                  ProductManagementPage.routeName,
+                );
+              },
+            ),
         ],
       ),
       body: Stack(
@@ -208,18 +268,32 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                           color: Colors.grey,
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'No hay productos cargados',
-                          style: TextStyle(fontSize: 16),
+                        Text(
+                          _getEmptyMessage(), // 👈 Mensaje dinámico
+                          style: const TextStyle(fontSize: 16),
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context)
-                                .pushNamed(AdminCreateProductPage.routeName);
-                          },
-                          child: const Text('Crear primer producto'),
-                        ),
+                        // Mostrar botón de crear solo si tiene sentido
+                        if (_currentFilter == null ||
+                            _currentFilter == 'active')
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context)
+                                  .pushNamed(AdminCreateProductPage.routeName);
+                            },
+                            child: const Text('Crear primer producto'),
+                          ),
+                        // Mostrar botón para ver todos si hay filtro
+                        if (_currentFilter != null)
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushReplacementNamed(
+                                context,
+                                ProductManagementPage.routeName,
+                              );
+                            },
+                            child: const Text('Ver todos los productos'),
+                          ),
                       ],
                     ),
                   );
@@ -250,6 +324,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                     width: 40,
                                     height: 40,
                                     fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.broken_image,
+                                        size: 20),
                                   ),
                                 )
                               : const Icon(Icons.shopping_bag,
@@ -285,6 +362,16 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                         : Colors.green,
                               ),
                             ),
+                            // 👇 Mostrar filtro actual para debug
+                            if (_currentFilter != null)
+                              Text(
+                                'Filtro: $_currentFilter',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                ),
+                              ),
                           ],
                         ),
                         trailing: Row(

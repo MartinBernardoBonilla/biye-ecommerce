@@ -10,4 +10,10 @@ const mpClient = new MercadoPagoConfig({
 
 console.log('💳 Mercado Pago SDK listo');
 
+console.log(
+  '💳 MP ACCESS TOKEN:',
+  process.env.MERCADOPAGO_ACCESS_TOKEN?.slice(0, 10),
+);
+
+
 export default mpClient;

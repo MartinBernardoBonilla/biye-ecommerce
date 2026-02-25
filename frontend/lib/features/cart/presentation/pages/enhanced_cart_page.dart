@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter/services.dart';
 
 import 'package:biye/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_event.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_state.dart';
 import 'package:biye/features/cart/domain/entities/cart_item.dart';
+import 'package:biye/features/cart/presentation/widgets/qr_bottom_sheet.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -22,34 +24,42 @@ class CartPage extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.yellow),
       ),
       body: BlocConsumer<CartBloc, CartState>(
-        listener: (context, state) async {
-          // ✅ Checkout OK → abrir Mercado Pago
-          if (state.initPoint != null) {
-            final Uri uri = Uri.parse(state.initPoint!);
+        listener: (context, state) {
+          // 🆕 Escuchamos cuando el pago es exitoso
+          if (state is PaymentSuccessState) {
+            // Cerrar el Bottom Sheet si está abierto
+            Navigator.pop(context);
 
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(
-                uri,
-                mode: LaunchMode.platformDefault,
-                webOnlyWindowName: '_self',
-              );
-            } else {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('No se pudo abrir Mercado Pago'),
-                  ),
-                );
-              }
-            }
+            // Mostrar mensaje de éxito
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('¡Pago exitoso!'),
+                backgroundColor: Colors.green,
+              ),
+            );
           }
 
-          // ❌ Error de pago
           if (state is CheckoutErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
                 backgroundColor: Colors.red,
+              ),
+            );
+          }
+
+          // 🆕 Escuchamos cuando el QR está listo
+          if (state.qrCode != null && state.paymentMethod == 'qr') {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              isDismissible: false, // No permitir cerrar mientras se procesa
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              builder: (context) => QrBottomSheet(
+                qrData: state.qrCode!,
+                orderId: state.orderId ?? '',
               ),
             );
           }
@@ -127,57 +137,97 @@ class _CheckoutSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Total',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                '\$${state.total.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
-            ],
-          ),
+          _buildTotalRow(),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: state.isCheckoutLoading
-                ? null
-                : () {
-                    context.read<CartBloc>().add(StartCheckout());
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.yellow[700],
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+
+          // Botón original: Generar Link
+          if (state.initPoint == null)
+            _buildActionButton(
+              context: context,
+              label: 'Generar link de pago',
+              isLoading: state.isCheckoutLoading && state.paymentMethod != 'qr',
+              onPressed: () => context.read<CartBloc>().add(StartCheckout()),
+              color: Colors.yellow[700]!,
             ),
-            child: state.isCheckoutLoading
-                ? const SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.black,
-                    ),
-                  )
-                : const Text(
-                    'Pagar con Mercado Pago',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-          ),
+
+          const SizedBox(height: 12),
+
+          // Botón: Pagar con QR
+          if (state.qrCode == null)
+            _buildActionButton(
+              context: context,
+              label: 'Pagar con QR',
+              icon: Icons.qr_code_2,
+              isLoading: state.isCheckoutLoading && state.paymentMethod == 'qr',
+              onPressed: () =>
+                  context.read<CartBloc>().add(const StartCheckoutWithQR()),
+              color: Colors.blueGrey[100]!,
+              textColor: Colors.black,
+            ),
+
+          // Si el link ya existe, mostramos opciones de compartir
+          if (state.initPoint != null) ...[
+            const Divider(),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.share),
+              label: const Text('Compartir link de pago'),
+              onPressed: () =>
+                  Share.share('Pagá tu pedido acá 👇\n\n${state.initPoint}'),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required BuildContext context,
+    required String label,
+    required VoidCallback? onPressed,
+    required Color color,
+    IconData? icon,
+    bool isLoading = false,
+    Color textColor = Colors.black,
+  }) {
+    return ElevatedButton(
+      onPressed: isLoading ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: isLoading
+          ? const SizedBox(
+              height: 24,
+              width: 24,
+              child: CircularProgressIndicator(strokeWidth: 2))
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, color: textColor),
+                  const SizedBox(width: 8)
+                ],
+                Text(label,
+                    style: TextStyle(
+                        color: textColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildTotalRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text('Total',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text('\$${state.total.toStringAsFixed(2)}',
+            style: const TextStyle(
+                fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue)),
+      ],
     );
   }
 }

@@ -2,9 +2,12 @@ import asyncHandler from '../middleware/asyncHandler.middleware.js';
 import Order from '../models/Order.js';
 import Product from '../models/Product.model.js';
 
+
+
 export const createOrder = asyncHandler(async (req, res) => {
   const { items, buyerInfo, currency } = req.body;
 
+  console.log('Items recibidos para crear orden:', req.body.items);
   // Validaciones básicas
   if (!items || items.length === 0) {
     res.status(400);

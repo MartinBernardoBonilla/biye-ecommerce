@@ -37,6 +37,27 @@ class UpdateQuantity extends CartEvent {
   List<Object?> get props => [itemId, quantity];
 }
 
+class StartCheckoutWithQR extends CartEvent {
+  const StartCheckoutWithQR();
+}
+
+// Opcional: Evento para cuando el QR expire
+class QrExpired extends CartEvent {
+  const QrExpired();
+
+  @override
+  List<Object> get props => [];
+}
+
+// Opcional: Evento para actualizar el estado del pago
+class CheckQrPaymentStatus extends CartEvent {
+  final String paymentId;
+  const CheckQrPaymentStatus(this.paymentId);
+
+  @override
+  List<Object> get props => [paymentId];
+}
+
 class StartCheckout extends CartEvent {}
 
 class CartPaymentConfirmed extends CartEvent {}

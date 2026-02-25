@@ -54,8 +54,7 @@ router.route('/admin/login').post(loginValidation, validate, async (req, res) =>
         }
 
         // 3. Éxito: Generar Token y devolver datos del admin
-        const token = generateToken(user._id); // ⬅️ Ahora funciona correctamente
-        
+        const token = generateToken(user._id, user.email, user.role);
         res.json({
             success: true,
             data: {

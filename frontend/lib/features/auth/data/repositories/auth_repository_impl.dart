@@ -24,8 +24,15 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final UserModel userModel = await remoteDataSource.login(email, password);
 
-      // 🔑 ESTE ERA EL ESLABÓN PERDIDO
-      apiClient.updateToken(userModel.token);
+      // 🔑 Guardar JWT solo si existe
+      final token = userModel.token;
+      if (userModel.token == null || userModel.token!.isEmpty) {
+        return Left(
+          fl.ServerFailure(message: 'Token inválido del backend'),
+        );
+      }
+
+      apiClient.setToken(userModel.token!);
 
       return Right(userModel);
     } on ex.ServerException catch (e) {

@@ -1,3 +1,6 @@
+import 'package:biye/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:biye/features/auth/presentation/bloc/auth_event.dart';
+
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -201,6 +204,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    context.read<AuthBloc>().add(AuthStarted());
     _fetchProducts(); // Llama a la API al iniciar
 
     _animationController = AnimationController(

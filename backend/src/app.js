@@ -10,67 +10,62 @@ import authRoutes from './routes/auth.routes.js';
 import categoriesRoutes from './routes/categories.routes.js';
 import ordersRoutes from './routes/orders.routes.js';
 
-
 const app = express();
 
-// ⭐⭐ CORS CONFIGURACIÓN CORRECTA PARA ES MODULES ⭐⭐
-// En tu src/app.js, actualiza corsOptions:
+// ⭐⭐ CORS CONFIGURACIÓN ÚNICA Y CORRECTA ⭐⭐
 const corsOptions = {
-    origin: function (origin, callback) {
-        // Permitir todo en desarrollo (TEMPORAL)
-        if (process.env.NODE_ENV !== 'production') {
-            return callback(null, true);
-        }
-        
-        const allowedOrigins = [
-            'http://localhost:42321',
-            'http://localhost:3000', 
-            'http://localhost:5000',
-            'http://127.0.0.1:42321',
-            'http://127.0.0.1:3000',
-            'http://127.0.0.1:5000',
-            'https://biye-web.com', // tu dominio futuro
-        ];
-        
-        if (!origin || allowedOrigins.includes(origin) || 
-            origin.includes('localhost') || 
-            origin.includes('127.0.0.1')) {
-            callback(null, true);
-        } else {
-            callback(new Error('No permitido por CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range'],
-    maxAge: 86400, // 24 horas
+  origin: function (origin, callback) {
+    // En desarrollo, permitir TODO (incluye Ngrok, localhost, etc.)
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    // En producción, whitelist específica
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'https://biye-web.com',
+    ].filter(Boolean);
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Accept', 
+    'Origin', 
+    'X-Requested-With',
+    'ngrok-skip-browser-warning' // 👈 AGREGADO PARA NGROK
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400,
 };
 
-app.use(cors({
-  origin: '*', // en dev
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+// Aplicar CORS UNA SOLA VEZ (eliminé la segunda configuración)
+app.use(cors(corsOptions));
 
+// Manejar preflight requests (OPTIONS)
 app.options('*', cors(corsOptions));
-
-
 
 app.use(express.json({ limit: '10mb' }));
 
-
+// Morgan SOLO en desarrollo (así el import NO se pone gris)
 if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'));
-    console.log('🚀 Servidor Biye - ES Modules activado');
+  app.use(morgan('dev')); // 👈 MORGAN SE USA AQUÍ
+  console.log('🚀 Servidor Biye - ES Modules activado');
+  console.log('📝 Logging HTTP con morgan activado');
 }
 
-// Mercado Pago
 // Mercado Pago
 const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
 
 if (!accessToken) {
-  console.error('⚠️  MERCADOPAGO_ACCESS_TOKEN no configurado');
+  console.error('⚠️ MERCADOPAGO_ACCESS_TOKEN no configurado');
 } else {
   console.log(
     '💳 MP MODE:',
@@ -86,7 +81,6 @@ if (!accessToken) {
   console.log('✅ Mercado Pago configurado');
 }
 
-
 // Rutas
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
@@ -95,37 +89,34 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/categories', categoriesRoutes);
 app.use('/api/v1/orders', ordersRoutes);
 
-
-
-
 // Health checks
 app.get('/', (req, res) => {
-    res.json({ 
-        message: '✅ Servidor Biye ES Modules',
-        environment: process.env.NODE_ENV || 'development',
-        cors: 'configurado',
-        timestamp: new Date().toISOString()
-    });
+  res.json({ 
+    message: '✅ Servidor Biye ES Modules',
+    environment: process.env.NODE_ENV || 'development',
+    cors: 'configurado',
+    morgan: process.env.NODE_ENV === 'development' ? 'activo' : 'inactivo',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'healthy',
-        modules: 'ES Modules',
-        timestamp: new Date().toISOString()
-    });
+  res.json({ 
+    status: 'healthy',
+    modules: 'ES Modules',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.get('/test-cors', (req, res) => {
-    res.json({
-        message: '✅ CORS funcionando',
-        origin: req.headers.origin || 'none',
-        timestamp: new Date().toISOString()
-    });
+  res.json({
+    message: '✅ CORS funcionando',
+    origin: req.headers.origin || 'none',
+    ngrok_header: req.headers['ngrok-skip-browser-warning'] ? 'presente' : 'ausente',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.use(errorHandler);
 
 export default app;
-
-

@@ -1,8 +1,7 @@
 // src/middleware/auth.middleware.js
-
 import jwt from 'jsonwebtoken';
 import asyncHandler from './asyncHandler.middleware.js';
-import User from '../models/User.js'; 
+import User from '../models/User.js';
 
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -19,36 +18,21 @@ export const protect = asyncHandler(async (req, res, next) => {
     throw new Error('No autorizado, no se encontró token');
   }
 
-  console.log('🧪 RAW AUTH HEADER:', req.headers.authorization);
-  console.log('🧪 TOKEN STRING:', token);
-
-
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-   console.log(
-  '💚 [PROTECT DEBUG] Token decodificado. id:',
-  decoded.id
-);
-
-req.user = await User.findById(decoded.id).select('-password');
-
+    req.user = await User.findById(decoded.userId).select('-password');
 
     if (!req.user) {
       res.status(401);
-      throw new Error('Usuario no encontrado o eliminado');
+      throw new Error('Usuario no encontrado');
     }
 
-    console.log(`💚 [PROTECT DEBUG] Usuario: ${req.user.email}`);
     next();
-
   } catch (error) {
-    console.error('❌ Error en protect:', error.message);
     res.status(401);
     throw new Error('No autorizado, token inválido');
   }
 });
-
 
 export const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {

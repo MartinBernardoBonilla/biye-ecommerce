@@ -1,4 +1,7 @@
+import 'package:biye/features/admin/presentation/pages/admin_orders_page.dart';
+import 'package:biye/features/admin/presentation/pages/admin_users_page.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -10,7 +13,7 @@ import 'shared/utils/network_test.dart';
 // PROVIDER
 import 'package:provider/provider.dart';
 
-import '../../../../core/network/api_client.dart';
+import 'core/network/api_client.dart';
 
 // CORE
 import 'core/navigation/navigator_key.dart';
@@ -18,6 +21,8 @@ import 'core/utils/payment_deep_link_handler.dart';
 
 // ADMIN
 import 'package:biye/features/admin/data/services/admin_service.dart';
+import 'package:biye/features/admin/presentation/bloc/admin_bloc.dart';
+import 'package:biye/features/admin/domain/repositories/admin_repository_impl.dart';
 import 'package:biye/features/admin/presentation/pages/admin_login_page.dart';
 import 'package:biye/features/admin/presentation/pages/admin_panel_page.dart';
 import 'package:biye/features/admin/presentation/pages/product_management_page.dart';
@@ -81,6 +86,10 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final baseUrl = kDebugMode
+        ? 'https://shanae-shearless-rakishly.ngrok-free.dev'
+        : 'https://api.biye.com';
+
     return MultiProvider(
       providers: [
         Provider<ApiClient>(
@@ -103,16 +112,21 @@ class _MyAppState extends State<MyApp> {
             create: (context) => CartBloc(
               authBloc: context.read<AuthBloc>(),
               mercadoPagoService: MercadoPagoService(
-                baseUrl: kDebugMode
-                    ? 'https://shanae-shearless-rakishly.ngrok-free.dev'
-                    : 'https://api.biye.com',
+                baseUrl: baseUrl,
                 token: '',
               ),
               orderService: OrderService(
-                baseUrl: kDebugMode
-                    ? 'https://shanae-shearless-rakishly.ngrok-free.dev'
-                    : 'https://api.biye.com',
+                baseUrl: baseUrl,
                 token: '',
+              ),
+            ),
+          ),
+          // ✅ NUEVO: AdminBloc AGREGADO AQUÍ
+          BlocProvider<AdminBloc>(
+            create: (context) => AdminBloc(
+              repository: AdminRepositoryImpl(
+                baseUrl: baseUrl,
+                client: http.Client(),
               ),
             ),
           ),
@@ -137,7 +151,12 @@ class _MyAppState extends State<MyApp> {
                 const AdminCreateProductPage(),
             AdminEditProductPage.routeName: (_) => const AdminEditProductPage(),
             AdminDashboardPage.routeName: (_) => const AdminDashboardPage(),
-
+            AdminOrdersPage.routeName: (_) => const AdminOrdersPage(),
+            AdminUsersPage.routeName: (_) => const AdminUsersPage(),
+            ProductManagementPage.routeName: (context) => ProductManagementPage(
+                  arguments: ModalRoute.of(context)?.settings.arguments
+                      as Map<String, dynamic>?,
+                ),
             // PAYMENT RESULT
             '/checkout/success': (_) => const PaymentSuccessPage(),
             '/checkout/pending': (_) => const PaymentPendingPage(),

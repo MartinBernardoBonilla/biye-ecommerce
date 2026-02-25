@@ -69,7 +69,8 @@ export const loginUser = asyncHandler(async (req, res) => { // CRÍTICO: Usar ex
                 username: user.username,
                 email: user.email,
                 role: user.role,
-                token: generateToken(user._id),
+                token: generateToken(user._id, user.email, user.role)
+
             }
         });
     } else {
@@ -99,4 +100,41 @@ export const getUserProfile = asyncHandler(async (req, res) => { // CRÍTICO: Us
         res.status(404);
         throw new Error('Usuario no encontrado.');
     }
+});
+
+// controllers/admin.controller.js
+export const getAdminStats = asyncHandler(async (req, res) => {
+  const [totalProducts, lowStock, outOfStock, activeProducts, totalOrders, pendingOrders, totalUsers] = await Promise.all([
+    Product.countDocuments(),
+    Product.countDocuments({ stock: { $lt: 10, $gt: 0 } }),
+    Product.countDocuments({ stock: 0 }),
+    Product.countDocuments({ active: true }),
+    Order.countDocuments(),
+    Order.countDocuments({ status: 'WAITING_PAYMENT' }),
+    User.countDocuments(),
+  ]);
+
+  const recentOrders = await Order.find()
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .populate('items.productId', 'name')
+    .lean();
+
+  res.json({
+    totalProducts,
+    lowStockCount: lowStock,
+    outOfStockCount: outOfStock,
+    activeProducts,
+    totalOrders,
+    pendingOrders,
+    totalUsers,
+    recentOrders: recentOrders.map(o => ({
+      id: o._id,
+      totalAmount: o.totalAmount,
+      status: o.status,
+      createdAt: o.createdAt,
+      items: o.items,
+      buyerInfo: o.buyerInfo
+    }))
+  });
 });

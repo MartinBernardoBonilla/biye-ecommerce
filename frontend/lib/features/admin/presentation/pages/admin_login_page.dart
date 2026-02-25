@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:biye/features/admin/presentation/pages/admin_panel_page.dart';
+import 'package:provider/provider.dart';
+import 'package:biye/core/network/api_client.dart';
+import 'package:biye/core/utils/auth_storage.dart'; // 👈 IMPORTAR
 
 class AdminLoginPage extends StatefulWidget {
   const AdminLoginPage({super.key});
@@ -21,36 +24,78 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    debugPrint('🟡 Iniciando proceso de login admin...');
 
     try {
-      await Future.delayed(const Duration(seconds: 2));
+      final apiClient = context.read<ApiClient>();
+      debugPrint('📤 Enviando petición a auth/admin/login');
 
-      if (_emailController.text.contains('@') &&
-          _passwordController.text.isNotEmpty) {
-        Navigator.pushReplacementNamed(
-          context,
-          AdminPanelPage.routeName,
-        );
+      final response = await apiClient.post(
+        'auth/admin/login',
+        {
+          'email': _emailController.text.trim(),
+          'password': _passwordController.text,
+        },
+      );
+
+      debugPrint('📥 Respuesta recibida: $response');
+
+      final token = response['data']?['token'];
+      debugPrint('🔑 Token extraído: ${token != null ? 'SÍ' : 'NO'}');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Token admin inválido');
+      }
+
+      // Guardar token en ApiClient (esto ya llama a AuthStorage)
+      apiClient.setToken(token);
+      debugPrint('✅ Token guardado en ApiClient');
+
+      // ✅ VERIFICACIÓN ADICIONAL
+      final savedToken = await AuthStorage.getToken();
+      debugPrint(
+          '🔍 Verificando token en AuthStorage: ${savedToken != null ? savedToken.substring(0, 15) : 'null'}...');
+
+      // También guardar datos del usuario
+      await AuthStorage.saveUserData(
+        userId: response['data']['id'],
+        email: response['data']['email'],
+        role: response['data']['role'],
+      );
+
+      debugPrint('🚀 Intentando navegar a AdminPanelPage...');
+      debugPrint('📍 mounted: $mounted');
+
+      if (mounted) {
+        Future.microtask(() {
+          Navigator.pushReplacementNamed(
+            context,
+            AdminPanelPage.routeName,
+          ).then((_) {
+            debugPrint('✅ Navegación completada exitosamente');
+          }).catchError((e) {
+            debugPrint('❌ Error en navegación: $e');
+          });
+        });
       } else {
+        debugPrint('❌ Widget no mounted, no se puede navegar');
+      }
+    } catch (error, stack) {
+      debugPrint('🔥 ERROR EN LOGIN: $error');
+      debugPrintStack(stackTrace: stack);
+
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Credenciales incorrectas'),
+          SnackBar(
+            content: Text(error.toString()),
             backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (error, stack) {
-      debugPrint('🔥 ADMIN LOGIN ERROR: $error');
-      debugPrintStack(stackTrace: stack);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString()),
-          backgroundColor: Colors.red,
-        ),
-      );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -83,15 +128,12 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Icono
                     const Icon(
                       Icons.admin_panel_settings,
                       size: 80,
                       color: Colors.blue,
                     ),
                     const SizedBox(height: 24),
-
-                    // Título
                     const Text(
                       'Panel de Administración',
                       style: TextStyle(
@@ -106,8 +148,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
-
-                    // Campo email
                     TextFormField(
                       controller: _emailController,
                       decoration: const InputDecoration(
@@ -127,8 +167,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-
-                    // Campo password
                     TextFormField(
                       controller: _passwordController,
                       decoration: InputDecoration(
@@ -157,8 +195,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       },
                     ),
                     const SizedBox(height: 24),
-
-                    // Botón de login
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -185,8 +221,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Credenciales de prueba
                     Card(
                       color: Colors.grey[50],
                       child: const Padding(
