@@ -1,16 +1,23 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:biye/features/product/data/models/product_model.dart';
+import 'package:biye/core/constants/app_constants.dart'; // 👈 IMPORTAR
 
 class ProductService {
-  final String baseUrl = 'http://localhost:5000/api/v1';
+  // ❌ ELIMINAR esta línea
+  // final String baseUrl = 'http://localhost:5000/api/v1';
+
+  // ✅ Usar AppConstants
+  String get baseUrl => AppConstants.apiBaseUrl;
 
   Future<List<ProductModel>> fetchProducts() async {
     try {
-      print('🛒 [DEBUG] Cargando productos desde: $baseUrl/products');
+      final url =
+          AppConstants.buildApiUrl(AppConstants.apiProducts); // 👈 NUEVO
+      print('🛒 [DEBUG] Cargando productos desde: $url');
 
       final response = await http.get(
-        Uri.parse('$baseUrl/products'),
+        Uri.parse(url), // 👈 USAR URL CONSTRUIDA
         headers: {
           'Origin': 'http://localhost:42321',
           'Accept': 'application/json',
@@ -67,8 +74,10 @@ class ProductService {
 
   Future<ProductModel?> fetchProductById(String id) async {
     try {
+      final url = AppConstants.buildApiUrl(
+          '${AppConstants.apiProducts}/$id'); // 👈 NUEVO
       final response = await http.get(
-        Uri.parse('$baseUrl/products/$id'),
+        Uri.parse(url),
         headers: {
           'Origin': 'http://localhost:42321',
           'Accept': 'application/json',

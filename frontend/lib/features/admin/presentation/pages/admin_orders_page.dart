@@ -74,7 +74,8 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
 
           if (state is AdminLoaded) {
             final orders = state.orders;
-
+            debugPrint(
+                '📱 [ORDERS PAGE] Total órdenes en estado: ${orders.length}');
             if (orders.isEmpty) {
               return const Center(child: Text('No hay pedidos'));
             }
@@ -85,14 +86,13 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
               itemCount: orders.length + (state.hasMoreOrders ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index == orders.length) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
+                  return const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(
                       child: CircularProgressIndicator(),
                     ),
                   );
                 }
-
                 final order = orders[index];
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
@@ -124,7 +124,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
                       Navigator.pushNamed(
                         context,
                         '/admin/order-detail',
-                        arguments: order.id,
+                        arguments: order,
                       );
                     },
                   ),

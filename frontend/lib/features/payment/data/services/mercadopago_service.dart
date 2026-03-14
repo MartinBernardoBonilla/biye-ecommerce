@@ -1,36 +1,58 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:biye/core/constants/app_constants.dart'; // 👈 IMPORTAR
+import 'package:biye/core/utils/auth_storage.dart'; // 👈 PARA OBTENER TOKEN
 
 class MercadoPagoService {
-  final String baseUrl;
-  final String token;
+  // ❌ ELIMINAR estos campos
+  // final String baseUrl;
+  // final String token;
 
-  MercadoPagoService({
-    required this.baseUrl,
-    required this.token,
-  });
+  // ✅ Constructor simplificado
+  MercadoPagoService();
+
+  // Helper para obtener token
+  Future<String?> _getToken() async {
+    return await AuthStorage.getToken();
+  }
 
   /// Llama a tu backend para crear la preferencia MP (checkout web)
   Future<String> createPaymentPreference(String orderId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No hay token de autenticación');
+
     final url = Uri.parse(
-      '$baseUrl/api/v1/payments/mercadopago/$orderId',
+      AppConstants.buildApiUrl('/payments/mercadopago/$orderId'),
     );
+
+    print('💳 [MP] Creando preferencia en: $url');
 
     final response = await http.post(
       url,
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': 'http://localhost:42321',
       },
     );
 
+    print('📥 [MP] Status: ${response.statusCode}');
+
     if (response.statusCode != 200) {
+      print('❌ [MP] Error: ${response.body}');
       throw Exception('Error creando preferencia MercadoPago');
     }
 
     final data = json.decode(response.body);
 
-    return data['checkoutUrl'];
+    final checkoutUrl =
+        data['checkoutUrl'] ?? data['init_point'] ?? data['url'];
+    if (checkoutUrl == null) {
+      throw Exception('No se recibió URL de checkout');
+    }
+
+    return checkoutUrl;
   }
 
   /// 🆕 Crea un código QR para el pago (llama a tu backend)
@@ -40,18 +62,26 @@ class MercadoPagoService {
   /// - orderId: ID de la orden
   /// - expiresAt: Timestamp de expiración
   Future<Map<String, dynamic>> createQrPayment(String orderId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No hay token de autenticación');
+
     final url = Uri.parse(
-      '$baseUrl/api/v1/payments/mercadopago/qr/$orderId',
+      AppConstants.buildApiUrl('/payments/mercadopago/qr/$orderId'),
     );
+
+    print('📱 [MP] Creando QR en: $url');
 
     final response = await http.post(
       url,
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
+        'Accept': 'application/json',
+        'Origin': 'http://localhost:42321',
       },
     );
+
+    print('📥 [MP] Status QR: ${response.statusCode}');
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       final error = json.decode(response.body);
@@ -61,10 +91,10 @@ class MercadoPagoService {
     final data = json.decode(response.body);
 
     return {
-      'qrData': data['qrData'] ?? data['qr_data'],
+      'qrData': data['qrData'] ?? data['qr_data'] ?? data['qr'],
       'orderId': data['orderId'] ?? orderId,
       'expiresAt': data['expiresAt'] ?? data['expires_at'],
-      'paymentId': data['paymentId'],
+      'paymentId': data['paymentId'] ?? data['id'],
     };
   }
 
@@ -72,8 +102,15 @@ class MercadoPagoService {
   ///
   /// Retorna el estado: 'pending', 'approved', 'rejected', 'cancelled'
   Future<String> checkPaymentStatus(String orderId) async {
-    final url = Uri.parse('$baseUrl/api/v1/payments/status/$orderId');
-    print('📡 POLLING A: $url');
+    final token = await _getToken();
+    if (token == null) {
+      print('⚠️ [MP] No hay token, retornando pending');
+      return 'pending';
+    }
+
+    final url =
+        Uri.parse(AppConstants.buildApiUrl('/payments/status/$orderId'));
+    print('📡 [MP] Polling a: $url');
 
     try {
       final response = await http.get(
@@ -81,22 +118,55 @@ class MercadoPagoService {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
+          'Accept': 'application/json',
+          'Origin': 'http://localhost:42321',
         },
-      ).timeout(
-          const Duration(seconds: 5)); // Agregamos un timeout por seguridad
+      ).timeout(const Duration(seconds: 5));
+
+      print('📥 [MP] Polling Status: ${response.statusCode}');
 
       if (response.statusCode != 200) {
-        // Aquí es donde ves el <!DOCTYPE... si la ruta está mal
-        print('⚠️ Error en Polling (${response.statusCode}): ${response.body}');
+        print('⚠️ [MP] Error en Polling: ${response.body}');
         return 'pending';
       }
 
       final data = json.decode(response.body);
-      return data['status'] ?? 'pending';
+
+      // Manejar diferentes formatos de respuesta
+      final status = data['status'] ??
+          data['paymentStatus'] ??
+          data['data']?['status'] ??
+          'pending';
+
+      print('✅ [MP] Estado del pago: $status');
+      return status;
     } catch (e) {
-      print('❌ Fallo de conexión en Polling: $e');
-      return 'pending'; // Si falla la red, seguimos esperando
+      print('❌ [MP] Fallo en Polling: $e');
+      return 'pending';
+    }
+  }
+
+  /// Opcional: Obtener información del pago
+  Future<Map<String, dynamic>> getPaymentInfo(String paymentId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No hay token de autenticación');
+
+    final url =
+        Uri.parse(AppConstants.buildApiUrl('/payments/info/$paymentId'));
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Error obteniendo información del pago');
     }
   }
 }

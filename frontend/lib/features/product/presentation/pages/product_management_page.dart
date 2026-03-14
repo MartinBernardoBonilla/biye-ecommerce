@@ -1,11 +1,11 @@
+import 'package:biye/features/admin/data/services/admin_service.dart';
+import 'package:biye/features/product/presentation/pages/admin/admin_create_product_page.dart';
+import 'package:biye/features/product/presentation/pages/admin/admin_edit_product_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 // Rutas relativas CORRECTAS
 import '../../../product/data/models/product_model.dart';
-import '../../data/services/admin_service.dart';
-import 'admin_create_product_page.dart';
-import 'admin_edit_product_page.dart';
 
 // ⭐️ AGREGAR ARGUMENTS PARA RECIBIR FILTROS
 class ProductManagementPage extends StatefulWidget {
@@ -43,6 +43,11 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   // 👇 NUEVO: Modificado para incluir filtro en la URL
   Future<List<ProductModel>> _fetchProducts() async {
     final adminService = Provider.of<AdminService>(context, listen: false);
+    String url = 'admin/products';
+    if (_currentFilter != null && _currentFilter!.isNotEmpty) {
+      url += '?filter=$_currentFilter';
+      debugPrint('🎯 Aplicando filtro: $_currentFilter a $url');
+    }
 
     // Construir URL con filtro si existe
     String endpoint = 'admin/products';

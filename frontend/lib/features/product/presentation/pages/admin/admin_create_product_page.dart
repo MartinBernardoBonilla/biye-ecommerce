@@ -2,8 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-
-import '../../data/services/admin_service.dart';
+import 'package:biye/features/admin/data/services/admin_service.dart'; // ✅ ÚNICO IMPORT
 
 class AdminCreateProductPage extends StatefulWidget {
   static const String routeName = '/admin/create-product';
@@ -23,8 +22,7 @@ class _AdminCreateProductPageState extends State<AdminCreateProductPage> {
   final _categoryController = TextEditingController();
   final _stockController = TextEditingController();
 
-  XFile?
-      _pickedImage; // Cambiado a XFile para mejor compatibilidad con ImagePicker
+  XFile? _pickedImage;
   bool _isLoading = false;
   Uint8List? _imageBytes;
 
@@ -101,7 +99,6 @@ class _AdminCreateProductPageState extends State<AdminCreateProductPage> {
 
   @override
   Widget build(BuildContext context) {
-    // El build se mantiene igual al que tenías, solo usa _buildImagePreview()
     return Scaffold(
       appBar: AppBar(title: const Text('Crear Nuevo Producto')),
       body: Stack(

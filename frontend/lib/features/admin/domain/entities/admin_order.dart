@@ -1,11 +1,12 @@
 // lib/features/admin/domain/entities/admin_order.dart
-import 'admin_order_item.dart'; // 👈 IMPORTANTE
+import 'package:biye/features/admin/domain/entities/admin_order_item.dart';
 
 class AdminOrder {
   final String id;
   final double totalAmount;
   final String status;
   final DateTime createdAt;
+  final DateTime? paidAt; // 👈 AGREGADO (nullable)
   final int itemCount;
   final String? customerName;
   final String? customerEmail;
@@ -17,6 +18,7 @@ class AdminOrder {
     required this.totalAmount,
     required this.status,
     required this.createdAt,
+    this.paidAt, // 👈 AGREGADO
     required this.itemCount,
     this.customerName,
     this.customerEmail,
@@ -38,6 +40,9 @@ class AdminOrder {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'].toString())
           : DateTime.now(),
+      paidAt: json['paidAt'] != null // 👈 AGREGADO
+          ? DateTime.tryParse(json['paidAt'].toString())
+          : null,
       itemCount: items.length,
       customerName: buyerInfo?['name']?.toString() ?? 'Invitado',
       customerEmail: buyerInfo?['email']?.toString(),
@@ -52,6 +57,7 @@ class AdminOrder {
       'totalAmount': totalAmount,
       'status': status,
       'createdAt': createdAt.toIso8601String(),
+      'paidAt': paidAt?.toIso8601String(), // 👈 AGREGADO
       'items': items.map((item) => item.toJson()).toList(),
       'buyerInfo': {
         'name': customerName,

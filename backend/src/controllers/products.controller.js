@@ -110,15 +110,47 @@ export const getFeaturedProducts = asyncHandler(async (req, res) => {
 
 // GET /api/v1/admin/products
 export const getAdminProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find().sort({ createdAt: -1 });
-
-  res.status(200).json({
+  const { filter } = req.query;
+  let query = {};
+  
+  console.log('🔍 [ADMIN PRODUCTS] Filtro recibido:', filter);
+  
+  // Aplicar filtros según el parámetro
+  switch (filter) {
+    case 'lowStock':
+      // Productos con stock entre 1 y 10
+      query = { countInStock: { $gt: 0, $lt: 10 } };
+      console.log('📦 Aplicando filtro: stock bajo');
+      break;
+    case 'outOfStock':
+      // Productos sin stock
+      query = { countInStock: 0 };
+      console.log('📦 Aplicando filtro: sin stock');
+      break;
+    case 'active':
+      // Productos activos
+      query = { isActive: true };
+      console.log('📦 Aplicando filtro: activos');
+      break;
+    default:
+      // Todos los productos (sin filtro)
+      query = {};
+      console.log('📦 Sin filtro - todos los productos');
+  }
+  
+  const products = await Product.find(query)
+    .sort({ createdAt: -1 })
+    .lean();
+  
+  console.log(`📊 Productos encontrados: ${products.length}`);
+  
+  res.json({
     success: true,
-    count: products.length,
     data: products,
+    count: products.length,
+    filter: filter || 'none'
   });
 });
-
 // POST /api/v1/admin/products
 export const createProduct = asyncHandler(async (req, res) => {
   req.body.user = req.user._id;

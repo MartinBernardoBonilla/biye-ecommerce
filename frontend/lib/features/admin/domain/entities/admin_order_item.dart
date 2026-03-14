@@ -17,25 +17,31 @@ class AdminOrderItem {
   });
 
   factory AdminOrderItem.fromJson(Map<String, dynamic> json) {
-    // 🔥 CORRECCIÓN CRUCIAL 🔥
-    // El backend envía productId como STRING, no como objeto
+    // 🔥 VERSIÓN QUE MANEJA AMBOS CASOS 🔥
+
     String id;
     String name;
     String? image;
 
     final productField = json['productId'];
 
+    // Caso 1: productId es un objeto completo (como en el detalle de orden)
     if (productField is Map<String, dynamic>) {
-      // Caso 1: productId es un objeto completo
       id = productField['_id']?.toString() ?? '';
       name = productField['name']?.toString() ?? 'Producto';
       image = productField['imageUrl']?.toString() ??
           productField['image']?['url']?.toString();
-    } else {
-      // Caso 2: productId es solo el ID string (¡ESTE ES TU CASO!)
+    }
+    // Caso 2: productId es solo el ID string (como en la lista)
+    else {
       id = productField?.toString() ?? json['productId']?.toString() ?? '';
       name = json['name']?.toString() ?? 'Producto';
       image = json['imageUrl']?.toString() ?? json['image']?['url']?.toString();
+    }
+
+    // Si no se pudo obtener el nombre del productField, usar el del json
+    if (name == 'Producto' && json['name'] != null) {
+      name = json['name'].toString();
     }
 
     return AdminOrderItem(

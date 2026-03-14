@@ -119,7 +119,7 @@ class AdminRepositoryImpl implements AdminRepository {
   Future<List<dynamic>> getUsers({int page = 1, int limit = 20}) async {
     final token = await AuthStorage.getToken();
     debugPrint(
-        '🔑 [ADMIN] Token para /users: ${token != null ? token.substring(0, 15) : 'null'}...');
+        '🔑 [ADMIN] Token para /users: ${token != null ? 'PRESENTE' : 'null'}');
 
     final response = await client.get(
       Uri.parse('$baseUrl/api/v1/admin/users?page=$page&limit=$limit'),
@@ -136,18 +136,28 @@ class AdminRepositoryImpl implements AdminRepository {
       final Map<String, dynamic> jsonResponse = json.decode(response.body);
       debugPrint('📦 [ADMIN] Respuesta COMPLETA: $jsonResponse');
 
-      // ✅ CORRECCIÓN: Los usuarios están en jsonResponse['data']
+      // ✅ CASO 1: Respuesta con estructura { success: true, data: [...] }
       if (jsonResponse.containsKey('data') && jsonResponse['data'] is List) {
-        final List<dynamic> users = jsonResponse['data'];
-        debugPrint('✅ [ADMIN] Usuarios EXTRAÍDOS: ${users.length}');
-        debugPrint(
-            '👤 [ADMIN] Primer usuario: ${users.isNotEmpty ? users.first : 'Ninguno'}');
-        return users;
-      } else {
-        debugPrint('❌ [ADMIN] FORMATO INCORRECTO. Keys: ${jsonResponse.keys}');
-        debugPrint('❌ [ADMIN] Valor de "data": ${jsonResponse['data']}');
-        return [];
+        final List<dynamic> users = jsonResponse['data'] as List;
+        debugPrint('✅ [ADMIN] Usuarios EXTRAÍDOS de data[]: ${users.length}');
+        return users; // ← AHORA SÍ devolvemos List, no Map
       }
+
+      // ✅ CASO 2: Respuesta directamente en el root como array
+      else if (jsonResponse['data'] == null &&
+          jsonResponse.values.any((v) => v is List)) {
+        // Buscar cualquier valor que sea List
+        final listValue =
+            jsonResponse.values.firstWhere((v) => v is List, orElse: () => []);
+        if (listValue is List) {
+          debugPrint('✅ [ADMIN] Usuarios encontrados como lista en el root');
+          return listValue;
+        }
+      }
+
+      // ✅ CASO 3: El Map completo podría ser un usuario? No, devolvemos array vacío
+      debugPrint('❌ [ADMIN] No se encontró lista de usuarios');
+      return []; // ← SIEMPRE devolvemos List, nunca Map
     } else {
       debugPrint('❌ [ADMIN] Error HTTP: ${response.statusCode}');
       throw Exception('Error cargando usuarios');

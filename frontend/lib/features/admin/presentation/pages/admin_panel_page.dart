@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:biye/features/admin/presentation/bloc/admin_bloc.dart'; // 👈 ÚNICO IMPORT
+import 'package:biye/features/admin/presentation/bloc/admin_bloc.dart';
 import 'package:biye/features/admin/presentation/utils/order_ui_helper.dart';
 
 class AdminPanelPage extends StatelessWidget {
@@ -233,55 +233,64 @@ class AdminPanelPage extends StatelessWidget {
                         ],
                       ),
 
-                      // 📦 ÚLTIMOS PEDIDOS
-                      if (stats?.recentOrders != null &&
-                          stats!.recentOrders!.isNotEmpty) ...[
-                        const SizedBox(height: 32),
-                        Text(
-                          'Últimos Pedidos',
-                          style: TextStyle(
-                            fontSize: constraints.maxWidth < 600 ? 16 : 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ...stats.recentOrders!.map((order) {
-                          debugPrint('📦 Mostrando orden: ${order.id}');
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor:
-                                    OrderUiHelper.getStatusColor(order.status),
-                                child: Text(
-                                  '\$${order.totalAmount?.toStringAsFixed(0) ?? '0'}',
-                                  style: const TextStyle(
-                                      fontSize: 10, color: Colors.white),
-                                ),
-                              ),
-                              title: Text(
-                                  'Orden #${order.id?.substring(0, 8) ?? 'N/A'}'),
-                              subtitle: Text(
-                                '${order.items?.length ?? 0} productos - ${OrderUiHelper.getStatusText(order.status)}',
-                              ),
-                              trailing: Text(
-                                OrderUiHelper.formatDate(order.createdAt),
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
-                              ),
-                              onTap: () {
-                                debugPrint(
-                                    '🔍 Navegando a detalle de orden: ${order.id}');
-                                Navigator.pushNamed(
-                                  context,
-                                  '/admin/order-detail',
-                                  arguments: order.id,
-                                );
-                              },
+                      const SizedBox(height: 32),
+
+                      // 📦 SECCIÓN DE NAVEGACIÓN A LISTAS COMPLETAS
+                      // (Reemplaza a los últimos pedidos individuales)
+                      Card(
+                        child: ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.purple[50],
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          );
-                        }).toList(),
-                      ],
+                            child: const Icon(Icons.receipt_long,
+                                color: Colors.purple),
+                          ),
+                          title: const Text(
+                            'Gestión de Pedidos',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            '${stats?.totalOrders ?? 0} pedidos totales',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          trailing: const Icon(Icons.arrow_forward),
+                          onTap: () {
+                            debugPrint(
+                                '📋 Navegando a lista completa de pedidos');
+                            Navigator.pushNamed(context, '/admin/orders');
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Card(
+                        child: ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.people, color: Colors.blue),
+                          ),
+                          title: const Text(
+                            'Gestión de Usuarios',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            '${stats?.totalUsers ?? 0} usuarios registrados',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          trailing: const Icon(Icons.arrow_forward),
+                          onTap: () {
+                            debugPrint(
+                                '👥 Navegando a lista completa de usuarios');
+                            Navigator.pushNamed(context, '/admin/users');
+                          },
+                        ),
+                      ),
 
                       const SizedBox(height: 40),
                     ],

@@ -1,5 +1,10 @@
 import 'package:biye/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:biye/features/auth/presentation/bloc/auth_event.dart';
+import 'package:biye/features/auth/presentation/bloc/auth_state.dart';
+import 'package:biye/features/product/presentation/pages/product_list_page.dart';
+import 'package:biye/features/product/presentation/pages/product_detail_page.dart';
+
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:flutter/material.dart';
 import 'dart:ui';
@@ -7,22 +12,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:biye/features/auth/presentation/registration_screen.dart';
 import 'package:biye/features/auth/presentation/login_screen.dart';
 
-// Importaciones del Carrito (existentes)
+// Importaciones del Carrito
 import 'package:biye/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_state.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_event.dart';
 import 'package:biye/features/cart/presentation/pages/enhanced_cart_page.dart';
 import 'package:biye/features/cart/domain/entities/cart_item.dart';
 
-// Importaciones del NUEVO servicio de productos (CRÍTICO)
+// Importaciones de admin y productos
 import 'package:biye/features/admin/presentation/pages/admin_login_page.dart';
-import 'package:biye/features/product/data/models/product_model.dart'; // Tu modelo real
+import 'package:biye/features/product/data/models/product_model.dart';
 import 'package:biye/features/product/data/services/product_service.dart';
 
-// ❌ ELIMINADA IMPORTACIÓN DUPLICADA: import 'package:biye/features/product/data/models/product_model.dart';
+import 'package:biye/core/utils/route_transitions.dart';
+import 'package:biye/features/profile/presentation/pages/profile_page.dart';
 
 // ------------------------------------------------------------------
-// ✅ WIDGET GLASSMORPHISM CARD (Actualizado para ProductModel)
+// GLASSMORPHISM CARD (con navegación a detalle y cursor clickeable)
 // ------------------------------------------------------------------
 class GlassmorphismCard extends StatelessWidget {
   final ProductModel product;
@@ -31,141 +37,234 @@ class GlassmorphismCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // DEBUG
-    print('🖼️ GlassmorphismCard para: ${product.name}');
-    print('   URL: ${product.image?.url}');
-
     final String displayPrice = '\$${product.price.toStringAsFixed(0)}';
     final String imageUrl = product.image?.url ??
         'https://placehold.co/150x150/cccccc/333333?text=NO+IMG';
 
-    print('   Usando URL: $imageUrl');
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(15.0),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(15.0),
-            border: Border.all(color: Colors.white.withOpacity(0.3)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Container(
-                      width: double.infinity, // ✅ AÑADIR ESTO
-                      height: double.infinity, // ✅ AÑADIR ESTO
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.grey[300]!,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          print(
+              '🖱️ Click en producto desde Home: ${product.name} (ID: ${product.id})');
+          Navigator.of(context).push(
+            RouteTransitions.fadeScale(
+              ProductDetailPage(productId: product.id),
+            ),
+          );
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15.0),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(15.0),
+                border: Border.all(color: Colors.white.withOpacity(0.3)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: Container(
+                          width: double.infinity,
+                          height: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.grey[300]!,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: imageUrl.toLowerCase().endsWith('.svg')
+                                ? SvgPicture.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    placeholderBuilder: (context) => Container(
+                                      color: Colors.grey[300]!,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        color: Colors.grey[300]!,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              Colors.grey,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey[300]!,
+                                        child: Icon(
+                                          Icons.shopping_bag,
+                                          size: 35,
+                                          color: Colors.grey,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover, // ✅ Asegurar que cubra
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) {
-                              print('   ✅ Imagen cargada: ${product.name}');
-                              return child;
-                            }
-                            print('   🔄 Cargando: ${product.name}');
-                            return Container(
-                              color: Colors.grey[300]!,
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.grey,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          displayPrice,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () {
+                              final cartItem = CartItem(
+                                id: product.id ?? 'no-id',
+                                name: product.name,
+                                price: product.price,
+                                quantity: 1,
+                                imageUrl: imageUrl,
+                                description: product.description,
+                              );
+                              context.read<CartBloc>().add(AddToCart(cartItem));
+
+                              // Primero declaramos la variable
+                              late OverlayEntry overlayEntry;
+
+                              // Luego creamos el overlayEntry
+                              overlayEntry = OverlayEntry(
+                                builder: (context) => Positioned(
+                                  bottom: 80,
+                                  left: 20,
+                                  right: 20,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green,
+                                        borderRadius: BorderRadius.circular(30),
+                                        boxShadow: const [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 10,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              '${product.name} agregado',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          GestureDetector(
+                                            onTap: () {
+                                              overlayEntry.remove();
+                                              Navigator.pushNamed(
+                                                  context, '/cart');
+                                            },
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: const Text(
+                                                'VER',
+                                                style: TextStyle(
+                                                  color: Colors.green,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            print(
-                              '   ❌ Error imagen: ${product.name} - $error',
-                            );
-                            return Container(
-                              color: Colors.grey[300]!,
-                              child: Icon(
-                                Icons.shopping_bag,
-                                size: 35,
-                                color: Colors.grey,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  product.name,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      displayPrice,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        final cartItem = CartItem(
-                          id: product.id ?? 'no-id',
-                          name: product.name,
-                          price: product.price,
-                          quantity: 1,
-                          imageUrl: imageUrl,
-                          description: product.description,
-                        );
-                        context.read<CartBloc>().add(AddToCart(cartItem));
+                              );
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              '${product.name} agregado al carrito',
+                              // Mostrar el overlay
+                              Overlay.of(context).insert(overlayEntry);
+
+                              // Auto-remover después de 3 segundos
+                              Future.delayed(const Duration(seconds: 3), () {
+                                if (overlayEntry.mounted) {
+                                  overlayEntry.remove();
+                                }
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.yellow.withOpacity(0.8),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.add_shopping_cart,
+                                size: 20,
+                                color: Colors.black,
+                              ),
                             ),
-                            duration: const Duration(seconds: 2),
-                            backgroundColor: Colors.green,
                           ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.yellow.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Icon(
-                          Icons.add_shopping_cart,
-                          size: 12,
-                          color: Colors.black,
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -173,12 +272,6 @@ class GlassmorphismCard extends StatelessWidget {
     );
   }
 }
-
-// ------------------------------------------------------------------
-// CLASE PRODUCT: Eliminamos el modelo hardcodeado y usamos el real.
-// Opcionalmente, puedes dejar esto como un typedef si necesitas usar 'Product'
-// en otros lugares, pero en esta pantalla ya usamos ProductModel directamente.
-// ------------------------------------------------------------------
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -194,9 +287,6 @@ class _HomeScreenState extends State<HomeScreen>
   late Animation<double> _slideAnimation;
   bool _isMenuOpen = false;
 
-  // ------------------------------------------------------------------
-  // ✅ ESTADO PARA CARGAR PRODUCTOS
-  // ------------------------------------------------------------------
   List<ProductModel> _products = [];
   bool _isLoading = true;
   final ProductService _productService = ProductService();
@@ -205,15 +295,15 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     context.read<AuthBloc>().add(AuthStarted());
-    _fetchProducts(); // Llama a la API al iniciar
+    _fetchProducts();
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _slideAnimation = Tween<double>(
-      begin: -300.0, // Menú oculto fuera de pantalla
-      end: 0.0, // Menú visible
+      begin: -300.0,
+      end: 0.0,
     ).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -222,15 +312,12 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ------------------------------------------------------------------
-  // ✅ FUNCIÓN PARA CARGAR PRODUCTOS DESDE LA API
-  // ------------------------------------------------------------------
   Future<void> _fetchProducts() async {
     try {
       final fetchedProducts = await _productService.fetchProducts();
       if (mounted) {
         setState(() {
-          _products = fetchedProducts; // ✅ CORREGIDO: usa fetchedProducts
+          _products = fetchedProducts;
           _isLoading = false;
         });
       }
@@ -238,11 +325,9 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         setState(() {
           _isLoading = false;
-          // Manejar error (e.g., mostrar un mensaje)
-          print("Error al cargar productos: $e");
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Error al cargar productos. Revisa tu backend.'),
+              content: Text('Error al cargar productos.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -268,51 +353,55 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  // Widget para la publicidad (sin cambios)
-  Widget _buildAdBanner() {
-    const double adHeight = 78.0;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16.0),
-      height: adHeight,
-      decoration: BoxDecoration(
-        color: Colors.grey[800]!,
-        borderRadius: BorderRadius.circular(15.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: const Text(
-        '¡Aquí va tu Publicidad!',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature - Próximamente'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: Colors.blueGrey[800],
       ),
     );
   }
 
-  // ------------------------------------------------------------------
-  // ✅ FUNCIÓN SIMPLE PARA CONSTRUIR PRODUCTOS CON PUBLICIDADES INTERCALADAS
-  // (Ahora usa la lista _products cargada de la API)
-  // ------------------------------------------------------------------
+  Widget _buildAdBanner() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16.0),
+      height: 78,
+      decoration: BoxDecoration(
+        color: Colors.grey[800]!,
+        borderRadius: BorderRadius.circular(15.0),
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        '¡Aquí va tu Publicidad!',
+        style: TextStyle(color: Colors.white, fontSize: 16),
+      ),
+    );
+  }
+
+  Widget _buildProductGrid(int startIndex, int count) {
+    final List<ProductModel> sublist =
+        _products.sublist(startIndex, startIndex + count);
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: sublist.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12.0,
+        mainAxisSpacing: 12.0,
+        childAspectRatio: 0.75,
+      ),
+      itemBuilder: (context, index) {
+        return GlassmorphismCard(product: sublist[index]);
+      },
+    );
+  }
+
   List<Widget> _buildProductsWithAds() {
     List<Widget> widgets = [];
     final int productCount = _products.length;
 
-    // Si no hay productos, no hay nada que mostrar (excepto el banner)
     if (productCount == 0 && !_isLoading) {
       widgets.add(
         const Center(
@@ -329,80 +418,39 @@ class _HomeScreenState extends State<HomeScreen>
       return widgets;
     }
 
-    // Intercalar productos y publicidad cada 6 items
     int productsProcessed = 0;
     while (productsProcessed < productCount) {
-      final int remaining = productCount - productsProcessed;
-      final int count = remaining > 6 ? 6 : remaining;
-
+      final int count = (productCount - productsProcessed) > 6
+          ? 6
+          : (productCount - productsProcessed);
       widgets.add(_buildProductGrid(productsProcessed, count));
       productsProcessed += count;
-
       if (productsProcessed < productCount) {
         widgets.add(const SizedBox(height: 20));
         widgets.add(_buildAdBanner());
         widgets.add(const SizedBox(height: 20));
       }
     }
-
-    widgets.add(const SizedBox(height: 20)); // Espacio final
-
+    widgets.add(const SizedBox(height: 20));
     return widgets;
   }
 
-  // ------------------------------------------------------------------
-  // ✅ FUNCIÓN PARA CONSTRUIR EL GRID (Ahora usa la lista _products)
-  // ------------------------------------------------------------------
-  Widget _buildProductGrid(int startIndex, int count) {
-    // Usamos el sublist para obtener solo los productos que necesitamos para este grid
-    final List<ProductModel> sublist = _products.sublist(
-      startIndex,
-      startIndex + count,
-    );
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: sublist.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, // 2 productos por fila para smartphone
-        crossAxisSpacing: 12.0,
-        mainAxisSpacing: 12.0,
-        childAspectRatio: 0.85, // Un poco más alto que ancho
-      ),
-      itemBuilder: (context, index) {
-        return GlassmorphismCard(product: sublist[index]);
-      },
-    );
-  }
-
   Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap) {
-    // ... (sin cambios)
     return ListTile(
       leading: Icon(icon, color: Colors.yellow, size: 24),
       title: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 16),
       ),
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      hoverColor: Colors.yellow.withOpacity(0.1),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final double scaleFactor = 1.75;
-
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo con imagen de mármol
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -411,194 +459,19 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ),
-
-          // Contenido principal
           Column(
             children: [
-              // AppBar fija
-              Container(
-                height: AppBar().preferredSize.height * scaleFactor +
+              SizedBox(
+                height: AppBar().preferredSize.height +
                     MediaQuery.of(context).padding.top,
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    // Botón hamburguesa/X animado empujado por el menú
-                    AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        double pushDistance = (_animationController.value * 80);
-
-                        return Transform.translate(
-                          offset: Offset(pushDistance, 0),
-                          child: IconButton(
-                            icon: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Opacity(
-                                  opacity: 1 - _animationController.value,
-                                  child: Transform.rotate(
-                                    angle:
-                                        _animationController.value * -0.785398,
-                                    child: Icon(
-                                      Icons.menu,
-                                      color: Colors.yellow,
-                                      size: 24 * scaleFactor,
-                                    ),
-                                  ),
-                                ),
-                                Opacity(
-                                  opacity: _animationController.value,
-                                  child: Transform.rotate(
-                                    angle:
-                                        _animationController.value * 0.785398,
-                                    child: Icon(
-                                      Icons.close,
-                                      color: Colors.yellow,
-                                      size: 24 * scaleFactor,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            onPressed: _toggleMenu,
-                          ),
-                        );
-                      },
-                    ),
-
-                    // Título centrado
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          'Biye',
-                          style: TextStyle(
-                            color: Colors.yellow,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20 * scaleFactor,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Icono del carrito con badge
-                    BlocBuilder<CartBloc, CartState>(
-                      builder: (context, state) {
-                        return Stack(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.shopping_cart,
-                                color: Colors.yellow,
-                                size: 24 * scaleFactor,
-                              ),
-                              onPressed: () {
-                                // NOTA: Asumimos que CartPage existe en el path correcto.
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CartPage(), // Usamos CartPage según el import
-                                  ),
-                                );
-                              },
-                            ),
-                            if (state.items.isNotEmpty)
-                              Positioned(
-                                right: 8,
-                                top: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 16,
-                                    minHeight: 16,
-                                  ),
-                                  child: Text(
-                                    '${state.items.length}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                    PopupMenuButton<String>(
-                      icon: Icon(
-                        Icons.person,
-                        color: Colors.yellow,
-                        size: 24 * scaleFactor,
-                      ),
-                      onSelected: (String result) {
-                        if (result == 'register') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RegistrationScreen(),
-                            ),
-                          );
-                        } else if (result == 'login') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                          );
-                        }
-                      },
-                      itemBuilder: (BuildContext context) =>
-                          <PopupMenuEntry<String>>[
-                        const PopupMenuItem<String>(
-                          value: 'login',
-                          child: Text('Iniciar sesión'),
-                        ),
-                        const PopupMenuItem<String>(
-                          value: 'register',
-                          child: Text('Registrarse'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
               ),
-
-              // Contenido desplazable con productos y publicidad
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
                       children: [
-                        // Espacio inicial
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height *
-                              0.08, // Reducido el espacio
-                          child: const Center(child: SizedBox.shrink()),
-                        ),
-
-                        // ------------------------------------------------------------------
-                        // ✅ CARGADOR O PRODUCTOS
-                        // ------------------------------------------------------------------
+                        const SizedBox(height: 30),
                         _isLoading
                             ? const Center(
                                 child: Padding(
@@ -618,8 +491,6 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ],
           ),
-
-          // Menú deslizante
           AnimatedBuilder(
             animation: _slideAnimation,
             builder: (context, child) {
@@ -630,11 +501,11 @@ class _HomeScreenState extends State<HomeScreen>
                   height: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.9),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black26,
                         blurRadius: 20,
-                        offset: const Offset(5, 0),
+                        offset: Offset(5, 0),
                       ),
                     ],
                   ),
@@ -642,7 +513,6 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header del menú
                         Container(
                           padding: const EdgeInsets.all(20.0),
                           decoration: BoxDecoration(
@@ -650,89 +520,87 @@ class _HomeScreenState extends State<HomeScreen>
                             border: Border(
                               bottom: BorderSide(
                                 color: Colors.yellow.withOpacity(0.3),
-                                width: 1,
                               ),
                             ),
                           ),
-                          child: const Row(
-                            children: [
-                              CircleAvatar(
-                                backgroundColor: Colors.yellow,
-                                child: Icon(Icons.person, color: Colors.black),
-                              ),
-                              SizedBox(width: 15),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          child: BlocBuilder<AuthBloc, AuthState>(
+                            builder: (context, state) {
+                              String userName = 'Usuario';
+                              if (state is AuthAuthenticated) {
+                                userName = state.user.displayName ?? 'Usuario';
+                              }
+                              return Row(
                                 children: [
-                                  Text(
-                                    'Bienvenido',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  const CircleAvatar(
+                                    backgroundColor: Colors.yellow,
+                                    child:
+                                        Icon(Icons.person, color: Colors.black),
                                   ),
-                                  Text(
-                                    'Usuario',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 14,
-                                    ),
+                                  const SizedBox(width: 15),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Bienvenido',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        userName,
+                                        style: const TextStyle(
+                                            color: Colors.white70),
+                                      ),
+                                    ],
                                   ),
                                 ],
-                              ),
-                            ],
+                              );
+                            },
                           ),
                         ),
-
-                        // Opciones del menú
                         Expanded(
                           child: ListView(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
                             children: [
-                              _buildMenuItem(Icons.home, 'Inicio', () {
+                              _buildMenuItem(Icons.home, 'Inicio', _toggleMenu),
+                              _buildMenuItem(Icons.shopping_bag, 'Productos',
+                                  () {
                                 _toggleMenu();
+                                Navigator.of(context).push(
+                                    RouteTransitions.slideFromRight(
+                                        const ProductListPage()));
                               }),
-                              _buildMenuItem(
-                                Icons.shopping_bag,
-                                'Productos',
-                                () {
-                                  _toggleMenu();
-                                },
-                              ),
                               _buildMenuItem(Icons.favorite, 'Favoritos', () {
                                 _toggleMenu();
+                                _showComingSoon(context, 'Favoritos');
                               }),
-                              _buildMenuItem(
-                                Icons.shopping_cart,
-                                'Carrito',
-                                () {
-                                  _toggleMenu();
-                                  // Navegar al carrito desde el menú también
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const CartPage(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              _buildMenuItem(Icons.history, 'Historial', () {
+                              _buildMenuItem(Icons.receipt_long, 'Mis Pedidos',
+                                  () {
                                 _toggleMenu();
+                                Navigator.pushNamed(context, '/my-orders');
                               }),
                               const Divider(color: Colors.white24),
-                              _buildMenuItem(
-                                Icons.settings,
-                                'Configuración',
-                                () {
-                                  _toggleMenu();
-                                },
-                              ),
-                              _buildMenuItem(Icons.help_outline, 'Ayuda', () {
+                              _buildMenuItem(Icons.person, 'Perfil', () {
                                 _toggleMenu();
+                                final authState =
+                                    context.read<AuthBloc>().state;
+                                if (authState is AuthAuthenticated) {
+                                  Navigator.of(context).push(
+                                      RouteTransitions.fadeScale(
+                                          const ProfilePage()));
+                                } else {
+                                  Navigator.of(context).push(
+                                      RouteTransitions.fadeScale(
+                                          const LoginScreen()));
+                                }
                               }),
                               _buildMenuItem(Icons.logout, 'Cerrar Sesión', () {
                                 _toggleMenu();
+                                context
+                                    .read<AuthBloc>()
+                                    .add(AuthLogoutRequested());
                               }),
                             ],
                           ),
@@ -744,53 +612,27 @@ class _HomeScreenState extends State<HomeScreen>
               );
             },
           ),
-
-          // Overlay para cerrar el menú al tocar fuera
           if (_isMenuOpen)
             GestureDetector(
               onTap: _toggleMenu,
               child: Container(
                 color: Colors.black.withOpacity(0.5),
-                width: double.infinity,
-                height: double.infinity,
               ),
             ),
         ],
       ),
-      // ✅ AGREGA ESTO - BOTÓN FLOTANTE PARA ADMIN
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            // 🟢 CORRECCIÓN: Se añade 'const' para resolver advertencias y mejorar rendimiento
-            MaterialPageRoute(builder: (context) => const AdminLoginPage()),
-          );
+          context.read<AuthBloc>().add(AuthCheckStatus());
+          Future.delayed(const Duration(milliseconds: 100), () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AdminLoginPage()),
+            );
+          });
         },
         backgroundColor: Colors.blueGrey[800]!,
         child: const Icon(Icons.admin_panel_settings, color: Colors.white),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
-      // Barra de navegación inferior fija (sin cambios)
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
-            label: 'Productos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favoritos',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
-        onTap: _onItemTapped,
       ),
     );
   }
