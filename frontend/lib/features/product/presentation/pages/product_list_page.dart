@@ -5,6 +5,7 @@ import 'package:biye/features/product/data/services/product_service.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_event.dart';
 import 'package:biye/features/cart/domain/entities/cart_item.dart';
+import 'package:biye/core/utils/overlay_helper.dart';
 
 // Widget reutilizable de ProductCard
 class ProductCard extends StatelessWidget {
@@ -29,26 +30,21 @@ class ProductCard extends StatelessWidget {
       child: Card(
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: InkWell(
-          onTap: () {
-            print('🖱️ Click en producto: ${product.name} (ID: ${product.id})');
-            Navigator.pushNamed(
-              context,
-              '/product-detail',
-              arguments: product.id,
-            ).then((_) {
-              print('✅ Regresó de detalle de producto');
-            }).catchError((e) {
-              print('❌ Error navegando: $e');
-            });
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Imagen
-              Expanded(
-                flex: 3,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: GestureDetector(
+                onTap: () {
+                  print(
+                      '🖱️ Click en producto: ${product.name} (ID: ${product.id})');
+                  Navigator.pushNamed(
+                    context,
+                    '/product-detail',
+                    arguments: product.id,
+                  );
+                },
                 child: ClipRRect(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(12),
@@ -81,73 +77,89 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // Información del producto
-              Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        product.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+            ),
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          displayPrice,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                            fontSize: 16,
+                          ),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            displayPrice,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                              fontSize: 16,
-                            ),
-                          ),
-                          MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            child: IconButton(
-                              icon:
-                                  const Icon(Icons.add_shopping_cart, size: 20),
-                              onPressed: () {
-                                final cartItem = CartItem(
-                                  id: product.id ?? '',
-                                  name: product.name,
-                                  price: product.price,
-                                  quantity: 1,
-                                  imageUrl: imageUrl,
-                                  description: product.description,
-                                );
-                                context
-                                    .read<CartBloc>()
-                                    .add(AddToCart(cartItem));
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () {
+                              print(
+                                  '🟢 Botón de carrito TOCADO para ${product.name}');
 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        '${product.name} agregado al carrito'),
-                                    duration: const Duration(seconds: 2),
-                                    backgroundColor: Colors.green,
+                              final cartItem = CartItem(
+                                id: product.id ?? '',
+                                name: product.name,
+                                price: product.price,
+                                quantity: 1,
+                                imageUrl: imageUrl,
+                                description: product.description,
+                              );
+                              context.read<CartBloc>().add(AddToCart(cartItem));
+
+                              OverlayHelper.showAddedToCart(
+                                context: context,
+                                productName: product.name,
+                                onViewCart: () =>
+                                    Navigator.pushNamed(context, '/cart'),
+                              );
+                            },
+                            child: Container(
+                              padding:
+                                  const EdgeInsets.all(12), // 👈 MÁS GRANDE
+                              decoration: BoxDecoration(
+                                color: Colors.yellow
+                                    .withOpacity(0.9), // 👈 AMARILLO BRILLANTE
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
                                   ),
-                                );
-                              },
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.add_shopping_cart,
+                                size: 24, // 👈 MÁS GRANDE
+                                color: Colors.black,
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

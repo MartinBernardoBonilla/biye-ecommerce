@@ -37,6 +37,11 @@ class CartPage extends StatelessWidget {
                 backgroundColor: Colors.green,
               ),
             );
+
+            // Redirigir al inicio después de 2 segundos
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            });
           }
 
           if (state is CheckoutErrorState) {
@@ -53,7 +58,7 @@ class CartPage extends StatelessWidget {
             showModalBottomSheet(
               context: context,
               isScrollControlled: true,
-              isDismissible: false, // No permitir cerrar mientras se procesa
+              isDismissible: false,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
@@ -99,12 +104,22 @@ class _EmptyCart extends StatelessWidget {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
+        children: [
+          const Icon(Icons.shopping_cart_outlined,
+              size: 80, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text(
             'Tu carrito está vacío',
             style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => Navigator.pushNamed(context, '/products'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueGrey[800],
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+            ),
+            child: const Text('Ver productos'),
           ),
         ],
       ),
@@ -118,6 +133,8 @@ class _CheckoutSummary extends StatelessWidget {
   final CartState state;
 
   const _CheckoutSummary({required this.state});
+
+  bool get _isProcessing => state.isCheckoutLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -140,12 +157,13 @@ class _CheckoutSummary extends StatelessWidget {
           _buildTotalRow(),
           const SizedBox(height: 16),
 
-          // Botón original: Generar Link
+          // Botón: Pagar con Link de pago
           if (state.initPoint == null)
             _buildActionButton(
               context: context,
-              label: 'Generar link de pago',
-              isLoading: state.isCheckoutLoading && state.paymentMethod != 'qr',
+              label: 'Pagar con link',
+              icon: Icons.link,
+              isLoading: _isProcessing && state.paymentMethod != 'qr',
               onPressed: () => context.read<CartBloc>().add(StartCheckout()),
               color: Colors.yellow[700]!,
             ),
@@ -158,7 +176,7 @@ class _CheckoutSummary extends StatelessWidget {
               context: context,
               label: 'Pagar con QR',
               icon: Icons.qr_code_2,
-              isLoading: state.isCheckoutLoading && state.paymentMethod == 'qr',
+              isLoading: _isProcessing && state.paymentMethod == 'qr',
               onPressed: () =>
                   context.read<CartBloc>().add(const StartCheckoutWithQR()),
               color: Colors.blueGrey[100]!,
@@ -166,13 +184,34 @@ class _CheckoutSummary extends StatelessWidget {
             ),
 
           // Si el link ya existe, mostramos opciones de compartir
-          if (state.initPoint != null) ...[
+          if (state.initPoint != null && !_isProcessing) ...[
             const Divider(),
             ElevatedButton.icon(
               icon: const Icon(Icons.share),
               label: const Text('Compartir link de pago'),
-              onPressed: () =>
-                  Share.share('Pagá tu pedido acá 👇\n\n${state.initPoint}'),
+              onPressed: () {
+                Share.share('Pagá tu pedido acá 👇\n\n${state.initPoint}');
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.copy),
+              label: const Text('Copiar link'),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: state.initPoint!));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Link copiado al portapapeles'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
             ),
           ],
         ],
@@ -243,78 +282,81 @@ class _CartItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final bloc = context.read<CartBloc>();
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                item.imageUrl,
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.broken_image, size: 60),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  item.imageUrl,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.broken_image, size: 60),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '\$${item.price.toStringAsFixed(2)} c/u',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
                 children: [
-                  Text(
-                    item.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  _QtyButton(
+                    icon: Icons.remove,
+                    onTap: () => bloc.add(
+                      UpdateQuantity(item.id, item.quantity - 1),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '\$${item.price.toStringAsFixed(2)} c/u',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      '${item.quantity}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  _QtyButton(
+                    icon: Icons.add,
+                    onTap: () => bloc.add(
+                      UpdateQuantity(item.id, item.quantity + 1),
+                    ),
                   ),
                 ],
               ),
-            ),
-            Row(
-              children: [
-                _QtyButton(
-                  icon: Icons.remove,
-                  onTap: () => bloc.add(
-                    UpdateQuantity(item.id, item.quantity - 1),
-                  ),
+              const SizedBox(width: 12),
+              Text(
+                '\$${(item.price * item.quantity).toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    '${item.quantity}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                _QtyButton(
-                  icon: Icons.add,
-                  onTap: () => bloc.add(
-                    UpdateQuantity(item.id, item.quantity + 1),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 12),
-            Text(
-              '\$${(item.price * item.quantity).toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -331,15 +373,18 @@ class _QtyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(6),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(icon, size: 16),
         ),
-        child: Icon(icon, size: 16),
       ),
     );
   }

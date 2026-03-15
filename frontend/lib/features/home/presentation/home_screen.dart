@@ -9,14 +9,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:biye/features/auth/presentation/registration_screen.dart';
 import 'package:biye/features/auth/presentation/login_screen.dart';
 
 // Importaciones del Carrito
 import 'package:biye/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:biye/features/cart/presentation/bloc/cart_state.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_event.dart';
-import 'package:biye/features/cart/presentation/pages/enhanced_cart_page.dart';
 import 'package:biye/features/cart/domain/entities/cart_item.dart';
 
 // Importaciones de admin y productos

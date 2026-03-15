@@ -1,3 +1,4 @@
+import 'package:biye/core/utils/overlay_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:biye/features/product/data/models/product_model.dart';
@@ -74,19 +75,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
     context.read<CartBloc>().add(AddToCart(cartItem));
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${_product!.name} agregado al carrito'),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.green,
-        action: SnackBarAction(
-          label: 'VER CARRITO',
-          textColor: Colors.white,
-          onPressed: () {
-            Navigator.pushNamed(context, '/cart');
-          },
-        ),
-      ),
+    // Usar el mismo overlay que funciona en Products
+    OverlayHelper.showAddedToCart(
+      context: context,
+      productName: _product!.name,
+      onViewCart: () => Navigator.pushNamed(context, '/cart'),
     );
   }
 
