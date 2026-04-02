@@ -55,7 +55,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   String _getImageUrl() {
-    if (_product?.image?.url?.isNotEmpty == true) {
+    if (_product?.image?.url.isNotEmpty == true) {
       return _product!.image!.url;
     }
     return 'https://res.cloudinary.com/dwchpxcrv/image/upload/default-product_zbscxc.png';

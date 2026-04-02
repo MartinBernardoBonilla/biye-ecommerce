@@ -38,27 +38,27 @@ export const updateProductStock = async (orderId, paymentInfo) => {
             email_payer: paymentInfo.email_payer,
         };
 
-        // 4. DECREMENTAR EL STOCK DE CADA PRODUCTO EN LA ORDEN
-        
-        // Usamos un loop for...of para manejar operaciones asíncronas dentro (actualización de stock)
-        for (const item of order.items) {
-            // El 'product' en item.product es el ObjectId del producto (gracias al esquema de Order)
-            const productToUpdate = await Product.findById(item.product);
+      // 4. DECREMENTAR EL STOCK DE CADA PRODUCTO EN LA ORDEN
+for (const item of order.items) {
+    // ✅ Usar productId (del frontend) o product (por si acaso)
+    const productId = item.productId || item.product;
+    const quantity = item.quantity || item.qty;  // 👈 CORRECCIÓN CLAVE
+    
+    const productToUpdate = await Product.findById(productId);
 
-            if (productToUpdate) {
-                // Verificar que la cantidad a decrementar no sea mayor que el stock actual
-                if (productToUpdate.countInStock >= item.qty) {
-                    productToUpdate.countInStock -= item.qty;
-                    await productToUpdate.save();
-                    console.log(`Stock actualizado para ${productToUpdate.name}. Nuevo stock: ${productToUpdate.countInStock}`);
-                } else {
-                    console.error(`ERROR DE STOCK: Stock insuficiente para ${productToUpdate.name}. Stock actual: ${productToUpdate.countInStock}, Solicitado: ${item.qty}`);
-                    // Aquí podrías añadir lógica para marcar la orden como 'Problema de Stock'
-                }
-            } else {
-                console.error(`Advertencia: Producto con ID ${item.product} no encontrado.`);
-            }
+    if (productToUpdate) {
+        // Verificar que la cantidad a decrementar no sea mayor que el stock actual
+        if (productToUpdate.countInStock >= quantity) {
+            productToUpdate.countInStock -= quantity;
+            await productToUpdate.save();
+            console.log(`Stock actualizado para ${productToUpdate.name}. Nuevo stock: ${productToUpdate.countInStock}`);
+        } else {
+            console.error(`ERROR DE STOCK: Stock insuficiente para ${productToUpdate.name}. Stock actual: ${productToUpdate.countInStock}, Solicitado: ${quantity}`);
         }
+    } else {
+        console.error(`Advertencia: Producto con ID ${productId} no encontrado.`);
+    }
+}
 
         // 5. Guardar la orden actualizada
         const updatedOrder = await order.save();

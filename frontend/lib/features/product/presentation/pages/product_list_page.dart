@@ -6,15 +6,20 @@ import 'package:biye/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_event.dart';
 import 'package:biye/features/cart/domain/entities/cart_item.dart';
 import 'package:biye/core/utils/overlay_helper.dart';
+import 'package:biye/core/widgets/custom_toast.dart';
+import 'package:biye/features/favorites/presentation/bloc/favorites_bloc.dart';
+import 'package:biye/features/favorites/presentation/bloc/favorites_event.dart';
+import 'package:biye/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:biye/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:biye/features/auth/presentation/bloc/auth_state.dart';
 
-// Widget reutilizable de ProductCard
 class ProductCard extends StatelessWidget {
   final ProductModel product;
 
   const ProductCard({super.key, required this.product});
 
   String _getImageUrl() {
-    if (product.image?.url?.isNotEmpty == true) {
+    if (product.image?.url.isNotEmpty == true) {
       return product.image!.url;
     }
     return 'https://res.cloudinary.com/dwchpxcrv/image/upload/default-product_zbscxc.png';
@@ -45,36 +50,146 @@ class ProductCard extends StatelessWidget {
                     arguments: product.id,
                   );
                 },
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
-                  ),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        color: Colors.grey[200],
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.broken_image, size: 40),
-                      );
-                    },
-                  ),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.broken_image, size: 40),
+                          );
+                        },
+                      ),
+                    ),
+                    // ✅ BOTÓN DE FAVORITOS AGREGADO
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, authState) {
+                          final isLoggedIn = authState is AuthAuthenticated ||
+                              authState is AuthTokenAuthenticated;
+
+                          return BlocBuilder<FavoritesBloc, FavoritesState>(
+                            buildWhen: (previous, current) {
+                              if (current is FavoriteStatus &&
+                                  current.productId == product.id) {
+                                return true;
+                              }
+                              if (current is FavoritesLoaded &&
+                                  previous is! FavoritesLoaded) {
+                                return true;
+                              }
+                              return false;
+                            },
+                            builder: (context, state) {
+                              bool isFavorite = false;
+
+                              if (state is FavoriteStatus &&
+                                  state.productId == product.id) {
+                                isFavorite = state.isFavorite;
+                              } else if (state is FavoritesLoaded) {
+                                isFavorite = state.favorites
+                                    .any((f) => f.productId == product.id);
+                              }
+
+                              return MouseRegion(
+                                cursor: isLoggedIn
+                                    ? SystemMouseCursors.click
+                                    : SystemMouseCursors.basic,
+                                child: GestureDetector(
+                                  onTap: isLoggedIn
+                                      ? () {
+                                          print(
+                                              '❤️ Tap en corazón de ${product.name}');
+                                          final favoritesBloc =
+                                              context.read<FavoritesBloc>();
+
+                                          if (isFavorite) {
+                                            favoritesBloc.add(RemoveFavorite(
+                                                productId: product.id));
+                                          } else {
+                                            favoritesBloc.add(AddFavorite(
+                                              productId: product.id,
+                                              productName: product.name,
+                                              productPrice: product.price,
+                                              productImage: imageUrl,
+                                            ));
+                                          }
+                                        }
+                                      : () {
+                                          CustomToast.action(
+                                            context: context,
+                                            message:
+                                                'Inicia sesión para agregar a favoritos',
+                                            actionLabel: 'INICIAR',
+                                            onAction: () {
+                                              Navigator.pushNamed(
+                                                  context, '/login');
+                                            },
+                                            duration:
+                                                const Duration(seconds: 3),
+                                            backgroundColor:
+                                                Colors.blueGrey[800]!,
+                                          );
+                                        },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Colors.black12,
+                                          blurRadius: 4,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      isFavorite
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                      color: isFavorite
+                                          ? Colors.red
+                                          : (isLoggedIn
+                                              ? Colors.grey
+                                              : Colors.grey[400]),
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -131,11 +246,9 @@ class ProductCard extends StatelessWidget {
                               );
                             },
                             child: Container(
-                              padding:
-                                  const EdgeInsets.all(12), // 👈 MÁS GRANDE
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.yellow
-                                    .withOpacity(0.9), // 👈 AMARILLO BRILLANTE
+                                color: Colors.yellow.withOpacity(0.9),
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: const [
                                   BoxShadow(
@@ -147,7 +260,7 @@ class ProductCard extends StatelessWidget {
                               ),
                               child: const Icon(
                                 Icons.add_shopping_cart,
-                                size: 24, // 👈 MÁS GRANDE
+                                size: 24,
                                 color: Colors.black,
                               ),
                             ),

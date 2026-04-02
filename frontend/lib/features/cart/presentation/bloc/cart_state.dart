@@ -153,7 +153,7 @@ class QrExpiredState extends CartState {
 class PaymentSuccessState extends CartState {
   final String confirmedOrderId;
 
-  PaymentSuccessState({
+  const PaymentSuccessState({
     required this.confirmedOrderId,
   }) : super(
           items: const [], // Limpiamos el carrito

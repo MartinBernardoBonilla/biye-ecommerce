@@ -101,16 +101,16 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
                       backgroundColor:
                           OrderUiHelper.getStatusColor(order.status),
                       child: Text(
-                        '\$${order.totalAmount?.toStringAsFixed(0) ?? '0'}',
+                        '\$${order.totalAmount.toStringAsFixed(0) ?? '0'}',
                         style:
                             const TextStyle(fontSize: 10, color: Colors.white),
                       ),
                     ),
-                    title: Text('Orden #${order.id?.substring(0, 8) ?? 'N/A'}'),
+                    title: Text('Orden #${order.id.substring(0, 8) ?? 'N/A'}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${order.items?.length ?? 0} productos'),
+                        Text('${order.items.length ?? 0} productos'),
                         Text('Cliente: ${order.customerName ?? 'Invitado'}'),
                         Text(
                             'Estado: ${OrderUiHelper.getStatusText(order.status)}'),

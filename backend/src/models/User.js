@@ -49,8 +49,9 @@ UserSchema.pre('save', async function(next) {
 
 // 3. Método para comparar la contraseña ingresada con la hasheada
 UserSchema.methods.matchPassword = async function(enteredPassword) {
-    // 🔑 La CLAVE: bcrypt.compare es asíncrono y por eso se usa await aquí.
-    return await bcrypt.compare(enteredPassword, this.password);
+    // 🔥 CORRECCIÓN: Necesitamos obtener la contraseña primero
+    const user = await this.model('User').findById(this._id).select('+password');
+    return await bcrypt.compare(enteredPassword, user.password);
 };
 
 // 4. Exportación por defecto para usar con `import User from ...`

@@ -1,4 +1,5 @@
 // lib/features/order/presentation/pages/my_orders_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:biye/features/order/presentation/bloc/order_bloc.dart';
@@ -13,6 +14,8 @@ class MyOrdersPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Pedidos'),
+        backgroundColor: Colors.blueGrey[800],
+        foregroundColor: Colors.white,
       ),
       body: BlocBuilder<OrderBloc, OrderState>(
         builder: (context, state) {
@@ -31,9 +34,9 @@ class MyOrdersPage extends StatelessWidget {
               itemBuilder: (ctx, i) {
                 final order = state.orders[i];
                 return ListTile(
-                  title: Text('Orden #${order.id.substring(0, 8)}'),
-                  subtitle:
-                      Text('Total: \$${order.totalAmount} - ${order.status}'),
+                  title: Text('Orden #${order.id?.substring(0, 8) ?? 'N/A'}'),
+                  subtitle: Text(
+                      'Total: \$${order.total.toStringAsFixed(2)} - ${order.status}'),
                   onTap: () {
                     Navigator.pushNamed(
                       context,

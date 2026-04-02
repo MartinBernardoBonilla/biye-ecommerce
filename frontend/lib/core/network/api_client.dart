@@ -91,14 +91,14 @@ class ApiClient {
     return _handleResponse(response);
   }
 
-  Future<void> delete(String path) async {
+  Future<Map<String, dynamic>> delete(String path) async {
     final uri = Uri.parse('$_baseUrl/$path');
+    debugPrint('🌐 DELETE $uri');
 
     final response = await _client.delete(uri, headers: _headers);
 
-    if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('DELETE failed: ${response.body}');
-    }
+    // Manejar la respuesta igual que GET y POST
+    return _handleResponse(response);
   }
 
   // ======================

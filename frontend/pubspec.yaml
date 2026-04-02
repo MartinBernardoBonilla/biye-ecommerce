@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"  # Más permisivo
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -24,7 +24,6 @@ dependencies:
   bloc: ^9.0.0
   flutter_bloc: ^9.1.1
   hydrated_bloc: ^10.1.1
-  uni_links: ^0.5.1
   app_links: ^7.0.0
 
   # Firebase
@@ -50,6 +49,7 @@ dependencies:
   share_plus: ^12.0.1
   qr_flutter: ^4.1.0
   flutter_secure_storage: ^10.0.0
+  audioplayers: ^6.6.0
 
 dev_dependencies:
   flutter_test:
@@ -65,5 +65,19 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
+
   assets:
     - assets/images/
+    - assets/sounds/click.mp3
+    - assets/sounds/splash.mp3
+    - assets/sounds/pago.mp3   # ✅ Eliminado el duplicado
+
+  fonts:
+    - family: Pacifico
+      fonts:
+        - asset: assets/fonts/Pacifico-Regular.ttf
+
+# ✅ analyzer FUERA del bloque flutter, al mismo nivel
+analyzer:
+  language:
+    strict-raw-types: true

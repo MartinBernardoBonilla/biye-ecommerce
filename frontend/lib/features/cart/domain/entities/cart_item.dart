@@ -18,6 +18,30 @@ class CartItem {
     required this.description, // Ahora CartItem soporta description
   });
 
+  // ✅ Agregar fromJson
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      id: json['id'],
+      name: json['name'],
+      price: json['price'].toDouble(),
+      quantity: json['quantity'],
+      imageUrl: json['imageUrl'],
+      description: json['description'],
+    );
+  }
+
+  // ✅ Agregar toJson
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'price': price,
+      'quantity': quantity,
+      'imageUrl': imageUrl,
+      'description': description,
+    };
+  }
+
   // Método para crear una copia del CartItem con una nueva cantidad.
   CartItem copyWith({
     String? id,

@@ -1,46 +1,62 @@
 // lib/features/order/data/repositories/order_repository_impl.dart
-import 'package:biye/features/order/domain/repositories/order_repository.dart';
-import 'package:biye/features/order/domain/entities/order_entity.dart';
-import 'package:biye/features/order/data/datasources/order_remote_datasource.dart';
+
+import 'package:biye/core/network/api_client.dart';
+import '../../domain/entities/order.dart';
+import '../../domain/repositories/order_repository.dart';
+import '../datasources/order_remote_datasource.dart';
 
 class OrderRepositoryImpl implements OrderRepository {
   final OrderRemoteDataSource remoteDataSource;
+  final ApiClient apiClient;
 
-  OrderRepositoryImpl({required this.remoteDataSource});
+  OrderRepositoryImpl({
+    required this.remoteDataSource,
+    required this.apiClient,
+  });
 
   @override
-  Future<List<OrderEntity>> getMyOrders() async {
+  Future<Order?> createOrder(Order order) async {
     try {
-      final response = await remoteDataSource.getMyOrders();
-      final List<dynamic> ordersData = response['data'] ?? response;
+      final response = await apiClient.post('orders', order.toJson());
 
-      return ordersData.map((json) => OrderEntity.fromJson(json)).toList();
+      if (response['success'] == true) {
+        return Order.fromJson(response['order']);
+      }
+      return null;
     } catch (e) {
-      throw Exception('Error al cargar órdenes: $e');
+      print('❌ Error creando orden: $e');
+      return null;
     }
   }
 
   @override
-  Future<OrderEntity> getOrderById(String orderId) async {
+  Future<Order?> getOrder(String id) async {
     try {
-      final response = await remoteDataSource.getOrderById(orderId);
-      final orderData = response['data'] ?? response;
+      final response = await apiClient.get('orders/$id');
 
-      return OrderEntity.fromJson(orderData);
+      if (response['success'] == true) {
+        return Order.fromJson(response['order']);
+      }
+      return null;
     } catch (e) {
-      throw Exception('Error al cargar orden: $e');
+      print('❌ Error obteniendo orden: $e');
+      return null;
     }
   }
 
   @override
-  Future<String> createOrder(Map<String, dynamic> orderData) async {
+  Future<List<Order>> getUserOrders() async {
     try {
-      final response = await remoteDataSource.createOrder(orderData);
-      return response['data']?['_id']?.toString() ??
-          response['_id']?.toString() ??
-          '';
+      final response = await apiClient.get('orders');
+
+      if (response['success'] == true) {
+        final List<dynamic> ordersJson = response['orders'];
+        return ordersJson.map((json) => Order.fromJson(json)).toList();
+      }
+      return [];
     } catch (e) {
-      throw Exception('Error al crear orden: $e');
+      print('❌ Error obteniendo órdenes: $e');
+      return [];
     }
   }
 }

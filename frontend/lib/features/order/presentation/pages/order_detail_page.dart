@@ -1,4 +1,5 @@
 // lib/features/order/presentation/pages/order_detail_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -22,6 +23,8 @@ class OrderDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Orden #${orderId.substring(0, 8)}'),
+        backgroundColor: Colors.blueGrey[800],
+        foregroundColor: Colors.white,
       ),
       body: BlocBuilder<OrderBloc, OrderState>(
         builder: (context, state) {
@@ -52,8 +55,8 @@ class OrderDetailPage extends StatelessWidget {
                           _buildInfoRow('Estado:', order.status),
                           _buildInfoRow(
                               'Fecha:', dateFormat.format(order.createdAt)),
-                          _buildInfoRow('Total:',
-                              currencyFormat.format(order.totalAmount)),
+                          _buildInfoRow(
+                              'Total:', currencyFormat.format(order.total)),
                         ],
                       ),
                     ),
@@ -66,10 +69,10 @@ class OrderDetailPage extends StatelessWidget {
                   const SizedBox(height: 8),
                   ...order.items.map((item) => Card(
                         child: ListTile(
-                          title: Text(item.productName),
+                          title: Text(item.name),
                           subtitle: Text('Cantidad: ${item.quantity}'),
-                          trailing:
-                              Text(currencyFormat.format(item.totalPrice)),
+                          trailing: Text(currencyFormat
+                              .format(item.price * item.quantity)),
                         ),
                       )),
                 ],

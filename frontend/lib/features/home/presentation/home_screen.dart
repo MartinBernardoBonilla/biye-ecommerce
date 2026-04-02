@@ -1,3 +1,5 @@
+import 'package:biye/core/services/navigation_service.dart';
+import 'package:biye/core/widgets/custom_toast.dart';
 import 'package:biye/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:biye/features/auth/presentation/bloc/auth_event.dart';
 import 'package:biye/features/auth/presentation/bloc/auth_state.dart';
@@ -21,6 +23,11 @@ import 'package:biye/features/admin/presentation/pages/admin_login_page.dart';
 import 'package:biye/features/product/data/models/product_model.dart';
 import 'package:biye/features/product/data/services/product_service.dart';
 
+// 👇 IMPORTS PARA FAVORITOS
+import 'package:biye/features/favorites/presentation/bloc/favorites_bloc.dart';
+import 'package:biye/features/favorites/presentation/bloc/favorites_event.dart';
+import 'package:biye/features/favorites/presentation/bloc/favorites_state.dart';
+
 import 'package:biye/core/utils/route_transitions.dart';
 import 'package:biye/features/profile/presentation/pages/profile_page.dart';
 
@@ -40,6 +47,8 @@ class GlassmorphismCard extends StatelessWidget {
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
+      onEnter: (_) => print('🟡 MOUSE ENTER - PRODUCTO ${product.name}'),
+      onExit: (_) => print('🟡 MOUSE EXIT - PRODUCTO ${product.name}'),
       child: GestureDetector(
         onTap: () {
           print(
@@ -74,55 +83,184 @@ class GlassmorphismCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                             color: Colors.grey[300]!,
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: imageUrl.toLowerCase().endsWith('.svg')
-                                ? SvgPicture.network(
-                                    imageUrl,
-                                    fit: BoxFit.cover,
-                                    placeholderBuilder: (context) => Container(
-                                      color: Colors.grey[300]!,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            Colors.grey,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                : Image.network(
-                                    imageUrl,
-                                    fit: BoxFit.cover,
-                                    loadingBuilder:
-                                        (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        color: Colors.grey[300]!,
-                                        child: Center(
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              Colors.grey,
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: imageUrl.toLowerCase().endsWith('.svg')
+                                    ? SvgPicture.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                        placeholderBuilder: (context) =>
+                                            Container(
+                                          color: Colors.grey[300]!,
+                                          child: const Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                Colors.grey,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      );
-                                    },
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: Colors.grey[300]!,
-                                        child: Icon(
-                                          Icons.shopping_bag,
-                                          size: 35,
-                                          color: Colors.grey,
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                      )
+                                    : Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder:
+                                            (context, child, loadingProgress) {
+                                          if (loadingProgress == null) {
+                                            return child;
+                                          }
+                                          return Container(
+                                            color: Colors.grey[300]!,
+                                            child: Center(
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(
+                                                  Colors.grey,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Container(
+                                            color: Colors.grey[300]!,
+                                            child: Icon(
+                                              Icons.shopping_bag,
+                                              size: 35,
+                                              color: Colors.grey,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                              ),
+                              // ❤️ BOTÓN DE FAVORITOS INTERACTIVO
+                              // En home_screen.dart, dentro del GlassmorphismCard, modifica el corazón:
+
+                              // En home_screen.dart, dentro del GlassmorphismCard, reemplaza el Positioned del corazón:
+
+                              // En home_screen.dart, dentro del GlassmorphismCard, el corazón debe ser así:
+
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: BlocBuilder<AuthBloc, AuthState>(
+                                  builder: (context, authState) {
+                                    final isLoggedIn =
+                                        authState is AuthAuthenticated ||
+                                            authState is AuthTokenAuthenticated;
+
+                                    // ✅ USAR EL BLoC GLOBAL, NO CREAR UNO NUEVO
+                                    return BlocBuilder<FavoritesBloc,
+                                        FavoritesState>(
+                                      buildWhen: (previous, current) {
+                                        if (current is FavoriteStatus &&
+                                            current.productId == product.id) {
+                                          return true;
+                                        }
+                                        if (current is FavoritesLoaded) {
+                                          return true;
+                                        }
+                                        return false;
+                                      },
+                                      builder: (context, state) {
+                                        bool isFavorite = false;
+
+                                        if (state is FavoriteStatus &&
+                                            state.productId == product.id) {
+                                          isFavorite = state.isFavorite;
+                                        } else if (state is FavoritesLoaded) {
+                                          isFavorite = state.favorites.any(
+                                              (f) => f.productId == product.id);
+                                        }
+
+                                        return MouseRegion(
+                                          cursor: isLoggedIn
+                                              ? SystemMouseCursors.click
+                                              : SystemMouseCursors.basic,
+                                          child: GestureDetector(
+                                            onTap: isLoggedIn
+                                                ? () {
+                                                    print(
+                                                        '❤️ Tap en corazón de ${product.name}');
+                                                    final favoritesBloc =
+                                                        context.read<
+                                                            FavoritesBloc>();
+
+                                                    if (isFavorite) {
+                                                      favoritesBloc.add(
+                                                          RemoveFavorite(
+                                                              productId:
+                                                                  product.id));
+                                                    } else {
+                                                      favoritesBloc
+                                                          .add(AddFavorite(
+                                                        productId: product.id,
+                                                        productName:
+                                                            product.name,
+                                                        productPrice:
+                                                            product.price,
+                                                        productImage: product
+                                                                .image?.url ??
+                                                            '',
+                                                      ));
+                                                    }
+                                                  }
+                                                : () {
+                                                    CustomToast.action(
+                                                      context: context,
+                                                      message:
+                                                          'Inicia sesión para agregar a favoritos',
+                                                      actionLabel: 'INICIAR',
+                                                      onAction: () {
+                                                        Navigator.pushNamed(
+                                                            context, '/login');
+                                                      },
+                                                      duration: const Duration(
+                                                          seconds: 3),
+                                                      backgroundColor:
+                                                          Colors.blueGrey[800]!,
+                                                    );
+                                                  },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                shape: BoxShape.circle,
+                                                boxShadow: const [
+                                                  BoxShadow(
+                                                    color: Colors.black12,
+                                                    blurRadius: 4,
+                                                    offset: Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Icon(
+                                                isFavorite
+                                                    ? Icons.favorite
+                                                    : Icons.favorite_border,
+                                                color: isFavorite
+                                                    ? Colors.red
+                                                    : (isLoggedIn
+                                                        ? Colors.grey
+                                                        : Colors.grey[400]),
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -151,6 +289,10 @@ class GlassmorphismCard extends StatelessWidget {
                         ),
                         MouseRegion(
                           cursor: SystemMouseCursors.click,
+                          onEnter: (_) =>
+                              print('🟡 MOUSE ENTER - CARRITO ${product.name}'),
+                          onExit: (_) =>
+                              print('🟡 MOUSE EXIT - CARRITO ${product.name}'),
                           child: GestureDetector(
                             onTap: () {
                               final cartItem = CartItem(
@@ -163,10 +305,8 @@ class GlassmorphismCard extends StatelessWidget {
                               );
                               context.read<CartBloc>().add(AddToCart(cartItem));
 
-                              // Primero declaramos la variable
                               late OverlayEntry overlayEntry;
 
-                              // Luego creamos el overlayEntry
                               overlayEntry = OverlayEntry(
                                 builder: (context) => Positioned(
                                   bottom: 80,
@@ -233,10 +373,8 @@ class GlassmorphismCard extends StatelessWidget {
                                 ),
                               );
 
-                              // Mostrar el overlay
                               Overlay.of(context).insert(overlayEntry);
 
-                              // Auto-remover después de 3 segundos
                               Future.delayed(const Duration(seconds: 3), () {
                                 if (overlayEntry.mounted) {
                                   overlayEntry.remove();
@@ -279,7 +417,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
   bool _isMenuOpen = false;
@@ -445,191 +583,201 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/marmolamarillo.jpg'),
-                fit: BoxFit.cover,
+    return Material(
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/marmolamarillo.jpg'),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-          ),
-          Column(
-            children: [
-              SizedBox(
-                height: AppBar().preferredSize.height +
-                    MediaQuery.of(context).padding.top,
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 30),
-                        _isLoading
-                            ? const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(50.0),
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.yellow,
+            Column(
+              children: [
+                SizedBox(
+                  height: AppBar().preferredSize.height +
+                      MediaQuery.of(context).padding.top,
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 30),
+                          _isLoading
+                              ? const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(50.0),
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.yellow,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              )
-                            : Column(children: _buildProductsWithAds()),
-                      ],
+                                )
+                              : Column(children: _buildProductsWithAds()),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          AnimatedBuilder(
-            animation: _slideAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(_slideAnimation.value, 0),
-                child: Container(
-                  width: 300,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.9),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 20,
-                        offset: Offset(5, 0),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(20.0),
-                          decoration: BoxDecoration(
-                            color: Colors.yellow.withOpacity(0.1),
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Colors.yellow.withOpacity(0.3),
+              ],
+            ),
+            AnimatedBuilder(
+              animation: _slideAnimation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(_slideAnimation.value, 0),
+                  child: Container(
+                    width: 300,
+                    height: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.9),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 20,
+                          offset: Offset(5, 0),
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20.0),
+                            decoration: BoxDecoration(
+                              color: Colors.yellow.withOpacity(0.1),
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.yellow.withOpacity(0.3),
+                                ),
                               ),
                             ),
-                          ),
-                          child: BlocBuilder<AuthBloc, AuthState>(
-                            builder: (context, state) {
-                              String userName = 'Usuario';
-                              if (state is AuthAuthenticated) {
-                                userName = state.user.displayName ?? 'Usuario';
-                              }
-                              return Row(
-                                children: [
-                                  const CircleAvatar(
-                                    backgroundColor: Colors.yellow,
-                                    child:
-                                        Icon(Icons.person, color: Colors.black),
-                                  ),
-                                  const SizedBox(width: 15),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Bienvenido',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Text(
-                                        userName,
-                                        style: const TextStyle(
-                                            color: Colors.white70),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: ListView(
-                            children: [
-                              _buildMenuItem(Icons.home, 'Inicio', _toggleMenu),
-                              _buildMenuItem(Icons.shopping_bag, 'Productos',
-                                  () {
-                                _toggleMenu();
-                                Navigator.of(context).push(
-                                    RouteTransitions.slideFromRight(
-                                        const ProductListPage()));
-                              }),
-                              _buildMenuItem(Icons.favorite, 'Favoritos', () {
-                                _toggleMenu();
-                                _showComingSoon(context, 'Favoritos');
-                              }),
-                              _buildMenuItem(Icons.receipt_long, 'Mis Pedidos',
-                                  () {
-                                _toggleMenu();
-                                Navigator.pushNamed(context, '/my-orders');
-                              }),
-                              const Divider(color: Colors.white24),
-                              _buildMenuItem(Icons.person, 'Perfil', () {
-                                _toggleMenu();
-                                final authState =
-                                    context.read<AuthBloc>().state;
-                                if (authState is AuthAuthenticated) {
-                                  Navigator.of(context).push(
-                                      RouteTransitions.fadeScale(
-                                          const ProfilePage()));
-                                } else {
-                                  Navigator.of(context).push(
-                                      RouteTransitions.fadeScale(
-                                          const LoginScreen()));
+                            child: BlocBuilder<AuthBloc, AuthState>(
+                              builder: (context, state) {
+                                String userName = 'Usuario';
+                                if (state is AuthAuthenticated) {
+                                  userName =
+                                      state.user.displayName ?? 'Usuario';
                                 }
-                              }),
-                              _buildMenuItem(Icons.logout, 'Cerrar Sesión', () {
-                                _toggleMenu();
-                                context
-                                    .read<AuthBloc>()
-                                    .add(AuthLogoutRequested());
-                              }),
-                            ],
+                                return Row(
+                                  children: [
+                                    const CircleAvatar(
+                                      backgroundColor: Colors.yellow,
+                                      child: Icon(Icons.person,
+                                          color: Colors.black),
+                                    ),
+                                    const SizedBox(width: 15),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Bienvenido',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          userName,
+                                          style: const TextStyle(
+                                              color: Colors.white70),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      ],
+                          Expanded(
+                            child: ListView(
+                              children: [
+                                _buildMenuItem(
+                                    Icons.home, 'Inicio', _toggleMenu),
+                                _buildMenuItem(Icons.shopping_bag, 'Productos',
+                                    () {
+                                  _toggleMenu();
+                                  Navigator.of(context).push(
+                                      RouteTransitions.slideFromRight(
+                                          const ProductListPage()));
+                                }),
+                                _buildMenuItem(Icons.favorite, 'Favoritos', () {
+                                  _toggleMenu();
+                                  context
+                                      .read<NavigationService>()
+                                      .navigateToFavorites();
+                                  // Cerrar el menú y volver al home
+                                  Navigator.popUntil(
+                                      context, (route) => route.isFirst);
+                                }),
+                                _buildMenuItem(
+                                    Icons.receipt_long, 'Mis Pedidos', () {
+                                  _toggleMenu();
+                                  Navigator.pushNamed(context, '/my-orders');
+                                }),
+                                const Divider(color: Colors.white24),
+                                _buildMenuItem(Icons.person, 'Perfil', () {
+                                  _toggleMenu();
+                                  final authState =
+                                      context.read<AuthBloc>().state;
+                                  if (authState is AuthAuthenticated) {
+                                    Navigator.of(context).push(
+                                        RouteTransitions.fadeScale(
+                                            const ProfilePage()));
+                                  } else {
+                                    Navigator.of(context).push(
+                                        RouteTransitions.fadeScale(
+                                            const LoginScreen()));
+                                  }
+                                }),
+                                _buildMenuItem(Icons.logout, 'Cerrar Sesión',
+                                    () {
+                                  _toggleMenu();
+                                  context
+                                      .read<AuthBloc>()
+                                      .add(AuthLogoutRequested());
+                                }),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-          if (_isMenuOpen)
-            GestureDetector(
-              onTap: _toggleMenu,
-              child: Container(
-                color: Colors.black.withOpacity(0.5),
-              ),
+                );
+              },
             ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.read<AuthBloc>().add(AuthCheckStatus());
-          Future.delayed(const Duration(milliseconds: 100), () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AdminLoginPage()),
-            );
-          });
-        },
-        backgroundColor: Colors.blueGrey[800]!,
-        child: const Icon(Icons.admin_panel_settings, color: Colors.white),
+            if (_isMenuOpen)
+              GestureDetector(
+                onTap: _toggleMenu,
+                child: Container(
+                  color: Colors.black.withOpacity(0.5),
+                ),
+              ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            context.read<AuthBloc>().add(AuthCheckStatus());
+            Future.delayed(const Duration(milliseconds: 100), () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AdminLoginPage()),
+              );
+            });
+          },
+          backgroundColor: Colors.blueGrey[800]!,
+          child: const Icon(Icons.admin_panel_settings, color: Colors.white),
+        ),
       ),
     );
   }

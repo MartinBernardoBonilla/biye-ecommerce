@@ -53,7 +53,7 @@ export const registerUser = asyncHandler(async (req, res) => { // CRÍTICO: Usar
 // @desc    Autenticar usuario y obtener token
 // @route   POST /api/v1/auth/login
 // @access  Public
-export const loginUser = asyncHandler(async (req, res) => { // CRÍTICO: Usar export const
+export const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
     // Buscar el usuario, seleccionando explícitamente la contraseña
@@ -61,7 +61,6 @@ export const loginUser = asyncHandler(async (req, res) => { // CRÍTICO: Usar ex
 
     // Verificar si el usuario existe y si la contraseña coincide
     if (user && (await user.matchPassword(password))) {
-        // Si es válido, devolvemos la información y un nuevo token
         res.json({
             success: true,
             data: {
@@ -69,8 +68,7 @@ export const loginUser = asyncHandler(async (req, res) => { // CRÍTICO: Usar ex
                 username: user.username,
                 email: user.email,
                 role: user.role,
-                token: generateToken(user._id, user.email, user.role)
-
+                token: generateToken(user._id)
             }
         });
     } else {
@@ -78,7 +76,6 @@ export const loginUser = asyncHandler(async (req, res) => { // CRÍTICO: Usar ex
         throw new Error('Email o contraseña incorrectos.');
     }
 });
-
 // @desc    Obtener perfil del usuario (protegida)
 // @route   GET /api/v1/auth/profile
 // @access  Private

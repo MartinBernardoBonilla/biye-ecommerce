@@ -9,6 +9,10 @@ import adminRoutes from './routes/admin.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import categoriesRoutes from './routes/categories.routes.js';
 import ordersRoutes from './routes/orders.routes.js';
+import favoritesRoutes from './routes/favorites.routes.js';
+import addressRoutes from './routes/address.routes.js';
+import paymentMethodsRoutes from './routes/paymentMethods.routes.js';
+
 
 const app = express();
 
@@ -88,6 +92,10 @@ app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/categories', categoriesRoutes);
 app.use('/api/v1/orders', ordersRoutes);
+app.use('/api/v1/favorites', favoritesRoutes);
+app.use('/api/v1/addresses', addressRoutes);
+app.use('/api/v1/payment-methods', paymentMethodsRoutes);
+
 
 // Health checks
 app.get('/', (req, res) => {

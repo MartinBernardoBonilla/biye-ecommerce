@@ -36,7 +36,7 @@ class AdminOrder {
     return AdminOrder(
       id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       totalAmount: (json['totalAmount'] ?? json['total'] ?? 0).toDouble(),
-      status: json['status']?.toString()?.toUpperCase() ?? 'PENDING',
+      status: json['status']?.toString().toUpperCase() ?? 'PENDING',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'].toString())
           : DateTime.now(),

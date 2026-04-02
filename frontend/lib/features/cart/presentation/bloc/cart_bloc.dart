@@ -156,6 +156,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           await mercadoPagoService.checkPaymentStatus(event.paymentId);
 
       print('📊 Estado del pago recibido: $status');
+      print('📊 Estado del pago recibido: "$status"');
+      print('🔍 Longitud del status: ${status.length}');
+      print('🔍 Códigos de caracteres: ${status.codeUnits}');
 
       // Normalizamos a minúsculas para comparar seguro
       final normalizedStatus = status.toLowerCase();
@@ -323,6 +326,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       return {
         'productId': item.id,
         'quantity': item.quantity,
+        'price': item.price, // 👈 AGREGAR
+        'name': item.name,
       };
     }).toList();
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:biye/features/admin/presentation/bloc/admin_bloc.dart';
-import 'package:biye/features/admin/presentation/utils/order_ui_helper.dart';
 
 class AdminPanelPage extends StatelessWidget {
   const AdminPanelPage({super.key});
@@ -113,7 +112,7 @@ class AdminPanelPage extends StatelessWidget {
                           _buildStatCard(
                             context,
                             'Productos',
-                            stats?.totalProducts?.toString() ?? '0',
+                            stats?.totalProducts.toString() ?? '0',
                             Icons.shopping_bag,
                             Colors.blue,
                             () {
@@ -125,7 +124,7 @@ class AdminPanelPage extends StatelessWidget {
                           _buildStatCard(
                             context,
                             'Stock Bajo',
-                            stats?.lowStockCount?.toString() ?? '0',
+                            stats?.lowStockCount.toString() ?? '0',
                             Icons.warning,
                             Colors.orange,
                             () {
@@ -141,7 +140,7 @@ class AdminPanelPage extends StatelessWidget {
                           _buildStatCard(
                             context,
                             'Sin Stock',
-                            stats?.outOfStockCount?.toString() ?? '0',
+                            stats?.outOfStockCount.toString() ?? '0',
                             Icons.block,
                             Colors.red,
                             () {
@@ -156,7 +155,7 @@ class AdminPanelPage extends StatelessWidget {
                           _buildStatCard(
                             context,
                             'Productos Activos',
-                            stats?.activeProducts?.toString() ?? '0',
+                            stats?.activeProducts.toString() ?? '0',
                             Icons.check_circle,
                             Colors.green,
                             () {

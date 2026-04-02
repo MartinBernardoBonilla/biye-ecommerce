@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'package:biye/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_event.dart';
 import 'package:biye/features/cart/presentation/bloc/cart_state.dart';
 import 'package:biye/features/cart/domain/entities/cart_item.dart';
 import 'package:biye/features/cart/presentation/widgets/qr_bottom_sheet.dart';
+
+import 'package:biye/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:biye/features/auth/presentation/bloc/auth_state.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -25,7 +29,7 @@ class CartPage extends StatelessWidget {
       ),
       body: BlocConsumer<CartBloc, CartState>(
         listener: (context, state) {
-          // 🆕 Escuchamos cuando el pago es exitoso
+          // Escuchamos cuando el pago es exitoso
           if (state is PaymentSuccessState) {
             // Cerrar el Bottom Sheet si está abierto
             Navigator.pop(context);
@@ -53,7 +57,7 @@ class CartPage extends StatelessWidget {
             );
           }
 
-          // 🆕 Escuchamos cuando el QR está listo
+          // Escuchamos cuando el QR está listo
           if (state.qrCode != null && state.paymentMethod == 'qr') {
             showModalBottomSheet(
               context: context,
@@ -70,10 +74,57 @@ class CartPage extends StatelessWidget {
           }
         },
         builder: (context, state) {
+          // Mostrar pantalla de carga mientras procesa pago
+          if (state.isCheckoutLoading) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Procesando pago...'),
+                ],
+              ),
+            );
+          }
+
+          // Mostrar pantalla de éxito cuando el pago se completa
+          if (state is PaymentSuccessState) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 80),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '¡Pago exitoso!',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Gracias por tu compra'),
+                  const SizedBox(height: 24),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/',
+                        (route) => false,
+                      ),
+                      child: const Text('Volver al inicio'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Mostrar carrito vacío
           if (state.items.isEmpty) {
             return const _EmptyCart();
           }
 
+          // Mostrar carrito con items
           return Column(
             children: [
               Expanded(
@@ -129,15 +180,41 @@ class _EmptyCart extends StatelessWidget {
 
 /* ───────────────────────── CHECKOUT SUMMARY ───────────────────────── */
 
-class _CheckoutSummary extends StatelessWidget {
+class _CheckoutSummary extends StatefulWidget {
   final CartState state;
-
   const _CheckoutSummary({required this.state});
 
-  bool get _isProcessing => state.isCheckoutLoading;
+  @override
+  State<_CheckoutSummary> createState() => __CheckoutSummaryState();
+}
+
+class __CheckoutSummaryState extends State<_CheckoutSummary> {
+  final bool _isPressed = false;
+  final AudioPlayer _player = AudioPlayer();
+
+  bool get _isProcessing => widget.state.isCheckoutLoading;
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playClickSound() async {
+    try {
+      await _player.play(AssetSource('sounds/click.mp3'));
+    } catch (e) {
+      print('Error reproduciendo sonido: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // 🟢 Si el estado es de éxito, NO mostrar el resumen (el QR desaparece)
+    if (widget.state is PaymentSuccessState) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
@@ -158,39 +235,152 @@ class _CheckoutSummary extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Botón: Pagar con Link de pago
-          if (state.initPoint == null)
+          if (widget.state.initPoint == null)
             _buildActionButton(
               context: context,
               label: 'Pagar con link',
               icon: Icons.link,
-              isLoading: _isProcessing && state.paymentMethod != 'qr',
+              isLoading: _isProcessing && widget.state.paymentMethod != 'qr',
               onPressed: () => context.read<CartBloc>().add(StartCheckout()),
               color: Colors.yellow[700]!,
             ),
 
           const SizedBox(height: 12),
 
-          // Botón: Pagar con QR
-          if (state.qrCode == null)
-            _buildActionButton(
-              context: context,
-              label: 'Pagar con QR',
-              icon: Icons.qr_code_2,
-              isLoading: _isProcessing && state.paymentMethod == 'qr',
-              onPressed: () =>
-                  context.read<CartBloc>().add(const StartCheckoutWithQR()),
-              color: Colors.blueGrey[100]!,
-              textColor: Colors.black,
+          // Botón: Pagar con QR con efectos
+          if (widget.state.qrCode == null)
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, authState) {
+                print('🔄 [CART] AuthState cambiado: ${authState.runtimeType}');
+
+                // Determinar si está autenticado (cualquier forma)
+                final isAuthenticated = authState is AuthAuthenticated ||
+                    authState is AuthTokenAuthenticated;
+
+                // Obtener el rol de forma segura
+                String? role;
+                if (authState is AuthAuthenticated) {
+                  role = authState.userData?['role'];
+                } else if (authState is AuthTokenAuthenticated) {
+                  role = authState.userData['role'];
+                }
+
+                final isAdmin = isAuthenticated && role == 'admin';
+
+                // Si es admin, mostrar mensaje de que no puede comprar
+                if (isAdmin) {
+                  return MouseRegion(
+                    cursor: SystemMouseCursors.forbidden,
+                    child: GestureDetector(
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Los administradores no pueden realizar compras'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                      },
+                      child: _buildActionButton(
+                        context: context,
+                        label: 'Modo administrador',
+                        icon: Icons.admin_panel_settings,
+                        isLoading: false,
+                        onPressed: null,
+                        color: Colors.grey[300]!,
+                        textColor: Colors.grey[600]!,
+                      ),
+                    ),
+                  );
+                }
+
+                // Usuario normal autenticado
+                if (isAuthenticated) {
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () {
+                          print('👆 Botón QR TOCADO');
+                          _playClickSound();
+                          context
+                              .read<CartBloc>()
+                              .add(const StartCheckoutWithQR());
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.yellow[700]!,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Pagar con QR (TEST)',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                // Usuario no autenticado
+                return MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  onEnter: (_) => print('🟡 Mouse ENTER en botón gris'),
+                  onExit: (_) => print('🟡 Mouse EXIT en botón gris'),
+                  child: GestureDetector(
+                    onTap: () {
+                      print('👆 Tap en botón gris');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content:
+                              Text('Debes iniciar sesión para pagar con QR'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      Navigator.pushNamed(context, '/login');
+                    },
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300]!,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.login, color: Colors.grey),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Iniciar sesión para pagar',
+                              style: TextStyle(color: Colors.grey[600]!),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
 
           // Si el link ya existe, mostramos opciones de compartir
-          if (state.initPoint != null && !_isProcessing) ...[
+          if (widget.state.initPoint != null && !_isProcessing) ...[
             const Divider(),
             ElevatedButton.icon(
               icon: const Icon(Icons.share),
               label: const Text('Compartir link de pago'),
               onPressed: () {
-                Share.share('Pagá tu pedido acá 👇\n\n${state.initPoint}');
+                Share.share(
+                    'Pagá tu pedido acá 👇\n\n${widget.state.initPoint}');
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -201,7 +391,7 @@ class _CheckoutSummary extends StatelessWidget {
               icon: const Icon(Icons.copy),
               label: const Text('Copiar link'),
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: state.initPoint!));
+                Clipboard.setData(ClipboardData(text: widget.state.initPoint!));
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Link copiado al portapapeles'),
@@ -239,7 +429,11 @@ class _CheckoutSummary extends StatelessWidget {
           ? const SizedBox(
               height: 24,
               width: 24,
-              child: CircularProgressIndicator(strokeWidth: 2))
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -263,14 +457,13 @@ class _CheckoutSummary extends StatelessWidget {
       children: [
         const Text('Total',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        Text('\$${state.total.toStringAsFixed(2)}',
+        Text('\$${widget.state.total.toStringAsFixed(2)}',
             style: const TextStyle(
                 fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue)),
       ],
     );
   }
 }
-
 /* ───────────────────────── CART ITEM TILE ───────────────────────── */
 
 class _CartItemTile extends StatelessWidget {

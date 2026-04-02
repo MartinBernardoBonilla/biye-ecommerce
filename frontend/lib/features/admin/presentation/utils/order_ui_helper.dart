@@ -1,6 +1,5 @@
 // lib/features/admin/presentation/utils/order_ui_helper.dart
 import 'package:flutter/material.dart';
-import 'package:biye/features/admin/domain/entities/admin_order.dart';
 
 class OrderUiHelper {
   // Color para UI según estado

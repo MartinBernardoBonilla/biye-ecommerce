@@ -47,7 +47,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         user['name']?.toString() ??
         'Sin nombre';
     String email = user['email']?.toString() ?? 'Sin email';
-    String role = user['role']?.toString()?.toLowerCase() ?? 'user';
+    String role = user['role']?.toString().toLowerCase() ?? 'user';
     String userId = user['_id']?.toString() ?? '';
 
     showModalBottomSheet(
@@ -408,7 +408,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       'Sin nombre';
                   String email = user['email']?.toString() ?? 'Sin email';
                   String role =
-                      user['role']?.toString()?.toLowerCase() ?? 'user';
+                      user['role']?.toString().toLowerCase() ?? 'user';
                   bool isActive = user['isActive'] != false; // Por defecto true
 
                   return Card(

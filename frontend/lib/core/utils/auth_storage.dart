@@ -56,20 +56,30 @@ class AuthStorage {
   }
 
   // Guardar datos del usuario
+
+  static const String _userNameKey = 'user_name';
+
   static Future<void> saveUserData({
     required String userId,
     required String email,
     required String role,
+    String? username, // 👈 AGREGAR
   }) async {
     if (_isWeb) {
       final prefs = await _getPrefs();
       await prefs.setString(_userIdKey, userId);
       await prefs.setString(_userEmailKey, email);
       await prefs.setString(_userRoleKey, role);
+      if (username != null) {
+        await prefs.setString(_userNameKey, username); // 👈 GUARDAR
+      }
     } else {
       await _secureStorage.write(key: _userIdKey, value: userId);
       await _secureStorage.write(key: _userEmailKey, value: email);
       await _secureStorage.write(key: _userRoleKey, value: role);
+      if (username != null) {
+        await _secureStorage.write(key: _userNameKey, value: username);
+      }
     }
     debugPrint(
         '👤 [AUTH] Datos de usuario guardados en ${_isWeb ? 'Web' : 'Móvil'}');
@@ -83,12 +93,14 @@ class AuthStorage {
         'userId': prefs.getString(_userIdKey),
         'email': prefs.getString(_userEmailKey),
         'role': prefs.getString(_userRoleKey),
+        'username': prefs.getString(_userNameKey), // 👈 AGREGAR
       };
     } else {
       return {
         'userId': await _secureStorage.read(key: _userIdKey),
         'email': await _secureStorage.read(key: _userEmailKey),
         'role': await _secureStorage.read(key: _userRoleKey),
+        'username': await _secureStorage.read(key: _userNameKey), // 👈 AGREGAR
       };
     }
   }

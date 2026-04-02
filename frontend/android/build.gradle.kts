@@ -1,9 +1,3 @@
-// Archivo: android/build.gradle.kts
-
-// El bloque de plugins ya está en settings.gradle.kts
-// plugins { ... }
-
-// Esto asegura que todos los módulos de tu proyecto usen los mismos repositorios
 allprojects {
     repositories {
         google()
@@ -11,7 +5,6 @@ allprojects {
     }
 }
 
-// Configuración personalizada para el directorio de compilación
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")
@@ -22,7 +15,6 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
-
 subprojects {
     project.evaluationDependsOn(":app")
 }

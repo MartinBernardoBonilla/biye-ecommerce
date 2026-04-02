@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'dart:ui';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:biye/core/network/api_client.dart';
+import 'package:biye/core/utils/auth_storage.dart';
 
-// Este es un placeholder para la pantalla de inicio,
-// a donde el usuario será redirigido después de registrarse.
+// Pantalla de inicio temporal (después puedes redirigir a HomeScreen)
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -31,94 +31,85 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _usernameController =
-      TextEditingController(); // Nuevo controlador para el nombre de usuario.
+  final TextEditingController _usernameController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _usernameController.dispose(); // Aseguramos que el controlador se libere.
+    _usernameController.dispose();
     super.dispose();
   }
 
-  // Esta función ahora contiene la lógica para registrar en Firebase Auth
-  // y guardar los datos en Firestore, incluyendo el nombre de usuario.
   void _register() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       try {
-        final String email = _emailController.text;
-        final String password = _passwordController.text;
-        final String username = _usernameController
-            .text; // Obtenemos el valor del nuevo controlador.
+        // 1. Obtener ApiClient del contexto
+        final apiClient = context.read<ApiClient>();
 
-        // 1. Crear un nuevo usuario con email y contraseña en Firebase Auth.
-        final UserCredential userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(email: email, password: password);
-
-        final User? user = userCredential.user;
-
-        if (user != null) {
-          // 2. Guardar los datos del usuario en Cloud Firestore.
-          // Usamos el UID del usuario como ID del documento para una referencia única.
-          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-            'email': email,
-            'uid': user.uid,
-            'username':
-                username, // Agregamos el nombre de usuario a los datos del documento.
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-        }
-
-        // Si el registro y el guardado en la base de datos son exitosos, mostramos un mensaje y navegamos.
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('¡Registro exitoso y datos guardados!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Redirigimos a la pantalla de inicio
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
-          );
-        }
-      } on FirebaseAuthException catch (e) {
-        // En caso de error de autenticación, mostramos un mensaje específico.
-        String message;
-        if (e.code == 'weak-password') {
-          message = 'La contraseña es demasiado débil.';
-        } else if (e.code == 'email-already-in-use') {
-          message = 'Ya existe una cuenta con este correo electrónico.';
-        } else {
-          message = 'Ocurrió un error inesperado: ${e.message}';
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        // 2. Registrar en el backend
+        final response = await apiClient.post(
+          'auth/register',
+          {
+            'email': _emailController.text,
+            'password': _passwordController.text,
+            'username': _usernameController.text,
+          },
         );
+
+        // 3. Verificar respuesta del backend
+        if (response['success'] == true) {
+          final data = response['data'];
+          final token = data['token'];
+          final user = data['user'];
+
+          // 4. Guardar token y datos de usuario
+          await AuthStorage.saveToken(token);
+          await AuthStorage.saveUserData(
+            userId: user['id'] ?? user['_id'] ?? '',
+            email: _emailController.text,
+            role: user['role'] ?? 'user',
+            username: user['username'] ?? _usernameController.text,
+          );
+
+          // 5. Registrar en Firebase como respaldo (opcional)
+          try {
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+              email: _emailController.text,
+              password: _passwordController.text,
+            );
+          } catch (firebaseError) {
+            print('⚠️ Error en Firebase (no crítico): $firebaseError');
+          }
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('¡Registro exitoso!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            // Redirigir al login o directamente al home
+            Navigator.pushReplacementNamed(context, '/login');
+          }
+        } else {
+          throw Exception(response['message'] ?? 'Error en registro');
+        }
       } catch (e) {
-        // En caso de cualquier otro error, como un problema con Firestore.
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al guardar datos: ${e.toString()}'),
+              content: Text('Error: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
         }
       } finally {
-        // Detenemos el indicador de carga sin importar el resultado.
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
@@ -131,17 +122,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.yellow),
+          icon: const Icon(Icons.arrow_back, color: Colors.yellow, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Registro',
-          style: TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Colors.yellow, fontWeight: FontWeight.bold, fontSize: 22),
         ),
         centerTitle: true,
       ),
       body: Stack(
         children: [
+          // Fondo
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -151,6 +144,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ),
           ),
 
+          // Formulario con efecto vidrio
           Center(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
@@ -179,6 +173,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
+
+                          // Email
                           TextFormField(
                             controller: _emailController,
                             style: const TextStyle(color: Colors.white),
@@ -194,17 +190,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 borderSide: BorderSide(color: Colors.white),
                               ),
                             ),
+                            keyboardType: TextInputType.emailAddress,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Por favor, ingresa tu correo electrónico';
+                                return 'Ingresa tu correo';
+                              }
+                              // Validación más robusta
+                              final emailRegex =
+                                  RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                              if (!emailRegex.hasMatch(value)) {
+                                return 'Correo electrónico inválido';
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: 16),
+
+                          // Nombre de usuario
                           TextFormField(
-                            controller:
-                                _usernameController, // Usamos el nuevo controlador.
+                            controller: _usernameController,
                             style: const TextStyle(color: Colors.white),
                             decoration: const InputDecoration(
                               labelText: 'Nombre de usuario',
@@ -220,12 +224,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Por favor, ingresa un nombre de usuario';
+                                return 'Ingresa un nombre de usuario';
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: 16),
+
+                          // Contraseña
                           TextFormField(
                             controller: _passwordController,
                             style: const TextStyle(color: Colors.white),
@@ -244,38 +250,49 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Por favor, ingresa tu contraseña';
-                              } else if (value.length < 6) {
-                                return 'La contraseña debe tener al menos 6 caracteres';
+                                return 'Ingresa tu contraseña';
+                              }
+                              if (value.length < 6) {
+                                return 'Mínimo 6 caracteres';
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: 30),
-                          ElevatedButton(
-                            onPressed: _isLoading ? null : _register,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.yellow,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 40,
-                                vertical: 15,
+
+                          // Botón de registro
+                          MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _register,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.yellow,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                  vertical: 15,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: _isLoading
-                                ? const CircularProgressIndicator(
-                                    color: Colors.black,
-                                  )
-                                : const Text(
-                                    'Registrarse',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.black,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Registrarse',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
+                            ),
                           ),
                         ],
                       ),
@@ -288,20 +305,5 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ],
       ),
     );
-  }
-}
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(home: RegistrationScreen());
   }
 }

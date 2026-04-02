@@ -119,8 +119,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   // ================================
-  // LOGIN
-  // ================================
+// LOGIN
+// ================================
   Future<void> _onLoginRequested(
     AuthLoginRequested event,
     Emitter<AuthState> emit,
@@ -129,16 +129,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      // 1️⃣ Login Firebase
-      final result = await _authService.signInWithEmailAndPassword(
-        email: event.email,
-        password: event.password,
-      );
-
-      final User user = result.user!;
-      debugPrint('✅ [AUTH] Firebase login exitoso: ${user.uid}');
-
-      // 2️⃣ Login BACKEND para obtener JWT
+      // ✅ PRIMERO: Login en el backend (sin Firebase)
       final response = await apiClient.post(
         'auth/login',
         {
@@ -149,58 +140,77 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       debugPrint('📦 [AUTH] Respuesta backend: $response');
 
-      final backendToken = response['data']?['token'];
-      final userRole = response['data']?['user']?['role'] ?? 'user';
-      final userId = response['data']?['user']?['id'] ?? user.uid;
-
-      if (backendToken == null) {
-        debugPrint('❌ [AUTH] No se recibió token del backend');
-        emit(const AuthError(message: 'No se pudo obtener token del servidor'));
+      if (response['data'] == null) {
+        debugPrint('❌ [AUTH] Respuesta inválida del backend');
+        emit(const AuthError(message: 'Error del servidor'));
         return;
       }
 
-      // 3️⃣ Guardar todo
+      final backendToken = response['data']?['token'];
+      final userRole = response['data']?['role'] ?? 'user';
+      final userId = response['data']?['_id']?.toString() ?? '';
+      final username = response['data']?['username'] ?? 'Usuario';
+
+      if (backendToken == null || backendToken.isEmpty) {
+        debugPrint('❌ [AUTH] No se recibió token del backend');
+        emit(const AuthError(message: 'Credenciales inválidas'));
+        return;
+      }
+
+      // ✅ SEGUNDO: Intentar login en Firebase (opcional, no crítico)
+      User? firebaseUser;
+      try {
+        final result = await _authService.signInWithEmailAndPassword(
+          email: event.email,
+          password: event.password,
+        );
+        firebaseUser = result.user;
+        debugPrint('✅ [AUTH] Firebase login exitoso');
+      } catch (firebaseError) {
+        debugPrint(
+            '⚠️ [AUTH] Firebase login falló (no crítico): $firebaseError');
+        // No es crítico, el usuario ya está autenticado con el backend
+      }
+
+      // ✅ TERCERO: Guardar token del backend
       await AuthStorage.saveToken(backendToken);
       await AuthStorage.saveUserData(
         userId: userId,
         email: event.email,
         role: userRole,
+        username: response['data']?['username'], // 👈 AGREGAR
       );
 
       apiClient.setToken(backendToken);
 
-      debugPrint('✅ [AUTH] Login completo - Role: $userRole');
-      emit(AuthAuthenticated(
-        user: user,
-        userData: {
-          'role': userRole,
-          'userId': userId,
-          'email': event.email,
-        },
-      ));
-    } on FirebaseAuthException catch (e) {
-      debugPrint('❌ [AUTH] Error Firebase: ${e.code} - ${e.message}');
-      String message;
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'No existe usuario con este email';
-          break;
-        case 'wrong-password':
-          message = 'Contraseña incorrecta';
-          break;
-        case 'invalid-email':
-          message = 'Email inválido';
-          break;
-        case 'user-disabled':
-          message = 'Usuario deshabilitado';
-          break;
-        default:
-          message = 'Error de autenticación: ${e.message}';
+      // ✅ CUARTO: Emitir estado autenticado
+      if (firebaseUser != null) {
+        emit(AuthAuthenticated(
+          user: firebaseUser,
+          userData: {
+            'role': userRole,
+            'userId': userId,
+            'email': event.email,
+            'username': username,
+          },
+        ));
+      } else {
+        // Si Firebase falla, igual estamos autenticados con el backend
+        emit(AuthTokenAuthenticated(
+          userData: {
+            'role': userRole,
+            'userId': userId,
+            'email': event.email,
+            'username': username,
+          },
+          token: backendToken,
+        ));
       }
-      emit(AuthError(message: message));
+
+      debugPrint('✅ [AUTH] Login completo - Role: $userRole');
     } catch (e) {
       debugPrint('❌ [AUTH] Error inesperado: $e');
-      emit(AuthError(message: 'Error inesperado: ${e.toString()}'));
+      emit(AuthError(message: 'Error al iniciar sesión: ${e.toString()}'));
     }
   }
 
