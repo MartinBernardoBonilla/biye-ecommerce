@@ -1,9 +1,9 @@
 // lib/features/checkout/presentation/bloc/checkout_state.dart
 
 import 'package:equatable/equatable.dart';
-import 'package:biye/features/cart/domain/entities/cart_item.dart';
-import 'package:biye/features/address/domain/entities/address.dart';
-import 'package:biye/features/payment_methods/domain/entities/payment_method.dart';
+import '../../../cart/domain/entities/cart_item.dart';
+import '../../../address/domain/entities/address.dart';
+import '../../../payment_methods/domain/entities/payment_method.dart';
 
 abstract class CheckoutState extends Equatable {
   const CheckoutState();
@@ -21,6 +21,7 @@ class CheckoutLoaded extends CheckoutState {
   final List<PaymentMethod> paymentMethods;
   final Address? selectedAddress;
   final PaymentMethod? selectedPaymentMethod;
+  final String? selectedPaymentMethodId;
   final double subtotal;
   final double shippingCost;
   final double tax;
@@ -32,11 +33,15 @@ class CheckoutLoaded extends CheckoutState {
     required this.paymentMethods,
     this.selectedAddress,
     this.selectedPaymentMethod,
+    this.selectedPaymentMethodId,
     required this.subtotal,
     required this.shippingCost,
     required this.tax,
     required this.total,
   });
+
+  bool get canProceed =>
+      selectedAddress != null && selectedPaymentMethod != null;
 
   CheckoutLoaded copyWith({
     List<CartItem>? items,
@@ -44,6 +49,7 @@ class CheckoutLoaded extends CheckoutState {
     List<PaymentMethod>? paymentMethods,
     Address? selectedAddress,
     PaymentMethod? selectedPaymentMethod,
+    String? selectedPaymentMethodId,
     double? subtotal,
     double? shippingCost,
     double? tax,
@@ -56,15 +62,14 @@ class CheckoutLoaded extends CheckoutState {
       selectedAddress: selectedAddress ?? this.selectedAddress,
       selectedPaymentMethod:
           selectedPaymentMethod ?? this.selectedPaymentMethod,
+      selectedPaymentMethodId:
+          selectedPaymentMethodId ?? this.selectedPaymentMethodId,
       subtotal: subtotal ?? this.subtotal,
       shippingCost: shippingCost ?? this.shippingCost,
       tax: tax ?? this.tax,
       total: total ?? this.total,
     );
   }
-
-  bool get canProceed =>
-      selectedAddress != null && selectedPaymentMethod != null;
 
   @override
   List<Object?> get props => [
@@ -73,6 +78,7 @@ class CheckoutLoaded extends CheckoutState {
         paymentMethods,
         selectedAddress,
         selectedPaymentMethod,
+        selectedPaymentMethodId,
         subtotal,
         shippingCost,
         tax,
@@ -80,12 +86,29 @@ class CheckoutLoaded extends CheckoutState {
       ];
 }
 
-class CheckoutSuccess extends CheckoutState {
+class CheckoutOrderCreated extends CheckoutState {
   final String orderId;
-  final String? paymentUrl;
-  const CheckoutSuccess({required this.orderId, this.paymentUrl});
+  final String qrData;
+  final String? qrImageBase64; // ✅ AGREGAR
+  final String? paymentMethodType;
+
+  const CheckoutOrderCreated({
+    required this.orderId,
+    required this.qrData,
+    this.qrImageBase64, // ✅ AGREGAR
+    this.paymentMethodType,
+  });
+
   @override
-  List<Object?> get props => [orderId, paymentUrl];
+  List<Object?> get props =>
+      [orderId, qrData, qrImageBase64, paymentMethodType];
+}
+
+class CheckoutPaymentConfirmed extends CheckoutState {
+  final String orderId;
+  const CheckoutPaymentConfirmed({required this.orderId});
+  @override
+  List<Object?> get props => [orderId];
 }
 
 class CheckoutError extends CheckoutState {

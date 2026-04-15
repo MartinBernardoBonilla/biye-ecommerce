@@ -8,12 +8,8 @@ const mpClient = new MercadoPagoConfig({
   accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
 });
 
+// ✅ Solo mostrar que está configurado, NO el token
 console.log('💳 Mercado Pago SDK listo');
-
-console.log(
-  '💳 MP ACCESS TOKEN:',
-  process.env.MERCADOPAGO_ACCESS_TOKEN?.slice(0, 10),
-);
-
+console.log('💳 Modo:', process.env.MERCADOPAGO_ACCESS_TOKEN.startsWith('TEST-') ? 'TEST' : 'PROD');
 
 export default mpClient;

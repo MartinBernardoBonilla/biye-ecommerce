@@ -1,11 +1,11 @@
-// lib/main.dart
-
 import 'package:biye/core/services/navigation_service.dart';
+import 'package:biye/core/utils/auth_storage.dart';
 import 'package:biye/core/widgets/persistent_bottom_nav.dart';
+import 'package:biye/features/address/presentation/pages/addres_list_page.dart';
 import 'package:biye/features/admin/presentation/pages/admin_order_detail_page.dart';
 import 'package:biye/features/admin/presentation/pages/admin_orders_page.dart';
 import 'package:biye/features/admin/presentation/pages/admin_users_page.dart';
-import 'package:biye/features/cart/presentation/pages/enhanced_cart_page.dart';
+
 import 'package:biye/features/order/presentation/pages/my_orders_page.dart';
 import 'package:biye/features/order/presentation/pages/order_detail_page.dart';
 import 'package:biye/features/product/presentation/pages/product_detail_page.dart';
@@ -49,8 +49,6 @@ import 'package:biye/features/auth/presentation/bloc/auth_event.dart';
 
 // CART / ORDER / PAYMENT
 import 'package:biye/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:biye/features/order/data/services/order_service.dart';
-import 'package:biye/features/payment/data/services/mercadopago_service.dart';
 
 // ORDER BLOC
 import 'package:biye/features/order/presentation/bloc/order_bloc.dart';
@@ -67,25 +65,36 @@ import 'package:biye/features/payment/presentation/pages/payment_success_page.da
 import 'package:biye/features/payment/presentation/pages/payment_pending_page.dart';
 import 'package:biye/features/payment/presentation/pages/payment_failure_page.dart';
 
+// CHECKOUT
+import 'package:biye/features/checkout/presentation/pages/checkout_page.dart';
+import 'package:biye/features/checkout/presentation/pages/payment_page.dart';
+import 'package:biye/features/checkout/presentation/bloc/checkout_bloc.dart';
+
+// ADDRESS
+import 'package:biye/features/address/presentation/pages/address_form_page.dart';
+import 'package:biye/features/address/presentation/bloc/address_bloc.dart';
+import 'package:biye/features/address/data/repositories/address_repository.dart';
+
+// PAYMENT METHODS
+import 'package:biye/features/payment_methods/presentation/pages/payment_method_list_page.dart';
+import 'package:biye/features/payment_methods/presentation/pages/payment_method_form_page.dart';
+import 'package:biye/features/payment_methods/presentation/bloc/payment_method_bloc.dart';
+import 'package:biye/features/payment_methods/data/repositories/payment_method_repository.dart';
+
+// SETTINGS
+import 'package:biye/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:biye/features/settings/data/repositories/settings_repository.dart';
+
 // THEME
 import 'core/providers/theme_provider.dart';
 import 'core/theme/app_theme.dart';
 
-import 'package:biye/features/address/presentation/bloc/address_bloc.dart';
-import 'package:biye/features/address/data/repositories/address_repository.dart';
-
-import 'package:biye/features/payment_methods/presentation/bloc/payment_method_bloc.dart';
-import 'package:biye/features/payment_methods/data/repositories/payment_method_repository.dart';
-
-import 'package:biye/features/settings/presentation/bloc/settings_bloc.dart';
-import 'package:biye/features/settings/data/repositories/settings_repository.dart';
-
-import 'package:biye/features/checkout/presentation/bloc/checkout_bloc.dart';
-
-// Import condicional para web
+// WEB
 import 'package:biye/core/web/web_import.dart'
     if (dart.library.html) 'package:biye/core/web/web_import.dart'
     if (dart.library.io) 'package:biye/core/web/web_import_stub.dart';
+
+import 'package:biye/features/cart/presentation/pages/cart_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,7 +122,8 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    // Notificar al HTML que Flutter está listo (solo web)
+    _loadInitialToken();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       notifyFlutterReady();
     });
@@ -123,9 +133,17 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  Future<void> _loadInitialToken() async {
+    final token = await AuthStorage.getToken();
+    if (token != null && token.isNotEmpty) {
+      debugPrint('🔑 Token inicial cargado correctamente');
+    } else {
+      debugPrint('⚠️ No hay token guardado');
+    }
+  }
+
   @override
   void dispose() {
-    // ✅ Liberar recursos
     PaymentDeepLinkHandler.dispose();
     super.dispose();
   }
@@ -165,16 +183,12 @@ class _MyAppState extends State<MyApp> {
                   baseUrl: baseUrl,
                   client: http.Client(),
                 ),
-                apiClient: context.read<ApiClient>(), // ✅ Agregar esto
+                apiClient: context.read<ApiClient>(),
               ),
             ),
           ),
           BlocProvider<CartBloc>(
-            create: (context) => CartBloc(
-              authBloc: context.read<AuthBloc>(),
-              mercadoPagoService: MercadoPagoService(),
-              orderService: OrderService(),
-            ),
+            create: (context) => CartBloc(),
           ),
           BlocProvider<PaymentMethodBloc>(
             create: (context) => PaymentMethodBloc(
@@ -210,7 +224,6 @@ class _MyAppState extends State<MyApp> {
               repository: SettingsRepository(),
             ),
           ),
-          // ✅ AGREGAR CheckoutBloc
           BlocProvider<CheckoutBloc>(
             create: (context) => CheckoutBloc(
               cartBloc: context.read<CartBloc>(),
@@ -235,6 +248,7 @@ class _MyAppState extends State<MyApp> {
                 print('🔴 [MAIN] Generando ruta: ${settings.name}');
 
                 switch (settings.name) {
+                  // AUTH
                   case '/login':
                     return MaterialPageRoute(
                       builder: (context) => const LoginScreen(),
@@ -243,15 +257,54 @@ class _MyAppState extends State<MyApp> {
                     return MaterialPageRoute(
                       builder: (context) => const RegistrationScreen(),
                     );
+
+                  // PRODUCTS
                   case '/product-detail':
                     final args = settings.arguments as String;
                     return MaterialPageRoute(
                       builder: (context) => ProductDetailPage(productId: args),
                     );
+
+                  // CART & CHECKOUT
                   case '/cart':
                     return MaterialPageRoute(
                       builder: (context) => const CartPage(),
                     );
+                  case '/checkout':
+                    return MaterialPageRoute(
+                      builder: (context) => const CheckoutPage(),
+                    );
+                  case '/payment':
+                    final args = settings.arguments as Map<String, dynamic>;
+                    return MaterialPageRoute(
+                      builder: (context) => PaymentPage(
+                        orderId: args['orderId'],
+                        qrData: args['qrData'],
+                        paymentLink: args['paymentLink'],
+                      ),
+                    );
+
+                  // ADDRESSES
+                  case '/addresses':
+                    return MaterialPageRoute(
+                      builder: (context) => const AddressListPage(),
+                    );
+                  case '/addresses/add':
+                    return MaterialPageRoute(
+                      builder: (context) => const AddressFormPage(),
+                    );
+
+                  // PAYMENT METHODS
+                  case '/payment-methods':
+                    return MaterialPageRoute(
+                      builder: (context) => const PaymentMethodListPage(),
+                    );
+                  case '/payment-methods/add':
+                    return MaterialPageRoute(
+                      builder: (context) => const PaymentMethodFormPage(),
+                    );
+
+                  // ADMIN
                   case AdminLoginPage.routeName:
                     return MaterialPageRoute(
                       builder: (context) => const AdminLoginPage(),
@@ -276,6 +329,8 @@ class _MyAppState extends State<MyApp> {
                     return MaterialPageRoute(
                       builder: (context) => const AdminUsersPage(),
                     );
+
+                  // PRODUCT MANAGEMENT (ADMIN)
                   case ProductManagementPage.routeName:
                     final args = settings.arguments as Map<String, dynamic>?;
                     return MaterialPageRoute(
@@ -290,6 +345,8 @@ class _MyAppState extends State<MyApp> {
                     return MaterialPageRoute(
                       builder: (context) => const AdminEditProductPage(),
                     );
+
+                  // ORDERS
                   case MyOrdersPage.routeName:
                     return MaterialPageRoute(
                       builder: (context) => const MyOrdersPage(),
@@ -298,6 +355,8 @@ class _MyAppState extends State<MyApp> {
                     return MaterialPageRoute(
                       builder: (context) => const OrderDetailPage(),
                     );
+
+                  // PAYMENT RESULTS
                   case '/checkout/success':
                     return MaterialPageRoute(
                       builder: (context) => const PaymentSuccessPage(),
@@ -310,6 +369,7 @@ class _MyAppState extends State<MyApp> {
                     return MaterialPageRoute(
                       builder: (context) => const PaymentFailurePage(),
                     );
+
                   default:
                     return MaterialPageRoute(
                       builder: (context) => const PersistentBottomNav(),

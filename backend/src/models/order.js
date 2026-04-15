@@ -2,10 +2,10 @@ import mongoose from 'mongoose';
 
 // Definición del esquema para un solo artículo dentro del pedido
 const ItemSchema = new mongoose.Schema({
-    productId: { 
+    productId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'Product' 
+        ref: 'Product'
     },
     name: {
         type: String,
@@ -25,21 +25,21 @@ const ItemSchema = new mongoose.Schema({
         type: String,
         default: ''
     }
-}, { _id: false }); 
+}, { _id: false });
 
 // Definición del esquema principal de la Orden
 const OrderSchema = new mongoose.Schema({
-    user: { 
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: false, 
+        required: false,
     },
-    
+
     items: {
         type: [ItemSchema],
         required: true,
         validate: {
-            validator: function(v) {
+            validator: function (v) {
                 return v && v.length > 0;
             },
             message: 'Un pedido debe contener al menos un artículo.'
@@ -51,7 +51,7 @@ const OrderSchema = new mongoose.Schema({
         required: true,
     },
 
-    
+
     totalAmount: {
         type: Number,
         required: true,
@@ -63,26 +63,27 @@ const OrderSchema = new mongoose.Schema({
         required: true,
         uppercase: true,
         trim: true,
-        enum: ['ARS', 'USD', 'BRL'] 
+        enum: ['ARS', 'USD', 'BRL']
     },
-    
+
     status: {
         type: String,
         required: true,
-        default: 'PENDING', 
+        default: 'PENDING',
         enum: ['PENDING', 'WAITING_PAYMENT', 'PAID', 'CANCELLED', 'SHIPPED', 'DELIVERED']
     },
-    
-    paymentDetails: {
-        type: {
-            paymentId: { type: String }, 
-            preferenceId: { type: String }, 
-            method: { type: String },
-            statusDetail: { type: String },
-        },
-        required: false 
+
+    // ✅ AGREGA ESTOS CAMPOS
+    paymentStatus: {
+        type: String,
+        default: 'pending',
+        enum: ['pending', 'approved', 'rejected', 'refunded']
     },
 
+    isPaid: {
+        type: Boolean,
+        default: false
+    },
     buyerInfo: {
         email: { type: String, required: true },
         name: { type: String },
@@ -95,7 +96,7 @@ const OrderSchema = new mongoose.Schema({
     }
 
 }, {
-    timestamps: true 
+    timestamps: true
 });
 
 const Order = mongoose.model('Order', OrderSchema);

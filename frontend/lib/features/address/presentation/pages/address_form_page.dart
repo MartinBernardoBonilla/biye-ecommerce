@@ -108,7 +108,7 @@ class _AddressFormPageState extends State<AddressFormPage> {
       ),
     );
 
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override

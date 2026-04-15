@@ -1,6 +1,6 @@
 import asyncHandler from '../middleware/asyncHandler.middleware.js';
-import Order from '../models/Order.js';
-import Product from '../models/Product.model.js';
+import Order from '../models/order.js';
+import Product from '../models/product.model.js';
 
 
 

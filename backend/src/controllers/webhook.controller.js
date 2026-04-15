@@ -1,5 +1,5 @@
 import asyncHandler from '../middleware/asyncHandler.middleware.js'; 
-import Order from '../models/Order.js'; 
+import Order from '../models/order.js'; 
 // Importar dependencias con la sintaxis de ES Modules y asegurar el .js
 
 /**

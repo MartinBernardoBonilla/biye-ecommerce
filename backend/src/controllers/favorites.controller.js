@@ -1,5 +1,5 @@
-import Favorite from '../models/Favorite.js';
-import Product from '../models/Product.model.js';
+import Favorite from '../models/favorite.js';
+import Product from '../models/product.model.js';
 
 // Obtener todos los favoritos del usuario
 export const getFavorites = async (req, res) => {

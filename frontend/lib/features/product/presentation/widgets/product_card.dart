@@ -60,106 +60,89 @@ class ProductCard extends StatelessWidget {
                   top: 8,
                   right: 8,
                   child: BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, authState) {
-                      final isLoggedIn = authState is AuthAuthenticated ||
-                          authState is AuthTokenAuthenticated;
+  builder: (context, authState) {
+    final isLoggedIn = authState is AuthAuthenticated ||
+        authState is AuthTokenAuthenticated;
 
-                      // ✅ Usar BlocBuilder con buildWhen para solo FavoriteStatus
-                      return BlocBuilder<FavoritesBloc, FavoritesState>(
-                        buildWhen: (previous, current) {
-                          // Solo reconstruir cuando es FavoriteStatus del producto actual
-                          if (current is FavoriteStatus &&
-                              current.productId == product.id) {
-                            return true;
-                          }
-                          // También reconstruir cuando se carga la lista completa (para estado inicial)
-                          if (current is FavoritesLoaded &&
-                              previous is! FavoritesLoaded) {
-                            return true;
-                          }
-                          return false;
-                        },
-                        builder: (context, state) {
-                          bool isFavorite = false;
+    return BlocBuilder<FavoritesBloc, FavoritesState>( // ✅ FIX
+      buildWhen: (previous, current) => true,
+      builder: (context, state) {
+        bool isFavorite = false;
 
-                          if (state is FavoriteStatus &&
-                              state.productId == product.id) {
-                            isFavorite = state.isFavorite;
-                          } else if (state is FavoritesLoaded) {
-                            isFavorite = state.favorites
-                                .any((f) => f.productId == product.id);
-                          }
+        if (state is FavoriteStatus &&
+            state.productId == product.id) {
+          isFavorite = state.isFavorite;
+        } else if (state is FavoritesLoaded) {
+          isFavorite = state.favorites
+              .any((f) => f.productId == product.id);
+        }
 
-                          return MouseRegion(
-                            cursor: isLoggedIn
-                                ? SystemMouseCursors.click
-                                : SystemMouseCursors.basic,
-                            child: GestureDetector(
-                              onTap: isLoggedIn
-                                  ? () {
-                                      print(
-                                          '❤️ Tap en corazón de ${product.name}');
-                                      final favoritesBloc =
-                                          context.read<FavoritesBloc>();
+        return MouseRegion(
+          cursor: isLoggedIn
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
+          child: GestureDetector(
+            onTap: isLoggedIn
+                ? () {
+                    final favoritesBloc =
+                        context.read<FavoritesBloc>();
 
-                                      if (isFavorite) {
-                                        favoritesBloc.add(RemoveFavorite(
-                                            productId: product.id));
-                                      } else {
-                                        favoritesBloc.add(AddFavorite(
-                                          productId: product.id,
-                                          productName: product.name,
-                                          productPrice: product.price,
-                                          productImage:
-                                              product.image?.url ?? '',
-                                        ));
-                                      }
-                                    }
-                                  : () {
-                                      CustomToast.action(
-                                        context: context,
-                                        message:
-                                            'Inicia sesión para agregar a favoritos',
-                                        actionLabel: 'INICIAR',
-                                        onAction: () {
-                                          Navigator.pushNamed(
-                                              context, '/login');
-                                        },
-                                        duration: const Duration(seconds: 3),
-                                        backgroundColor: Colors.blueGrey[800]!,
-                                      );
-                                    },
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Colors.black12,
-                                      blurRadius: 4,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  isFavorite
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color: isFavorite
-                                      ? Colors.red
-                                      : (isLoggedIn
-                                          ? Colors.grey
-                                          : Colors.grey[400]),
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
+                    if (isFavorite) {
+                      favoritesBloc.add(
+                          RemoveFavorite(productId: product.id));
+                    } else {
+                      favoritesBloc.add(AddFavorite(
+                        productId: product.id,
+                        productName: product.name,
+                        productPrice: product.price,
+                        productImage: product.image?.url ?? '',
+                      ));
+                    }
+                  }
+                : () {
+                    CustomToast.action(
+                      context: context,
+                      message:
+                          'Inicia sesión para agregar a favoritos',
+                      actionLabel: 'INICIAR',
+                      onAction: () {
+                        Navigator.pushNamed(context, '/login');
+                      },
+                      duration: const Duration(seconds: 3),
+                      backgroundColor: Colors.blueGrey[800]!,
+                    );
+                  },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
                   ),
+                ],
+              ),
+              child: Icon(
+                isFavorite
+                    ? Icons.favorite
+                    : Icons.favorite_border,
+                color: isFavorite
+                    ? Colors.red
+                    : (isLoggedIn
+                        ? Colors.grey
+                        : Colors.grey[400]),
+                size: 20,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  },
+),
                 ),
               ],
             ),

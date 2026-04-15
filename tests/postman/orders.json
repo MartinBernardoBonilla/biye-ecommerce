@@ -1,0 +1,32 @@
+{
+  "info": {
+    "name": "Biye API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\":\"test@user.com\",\"password\":\"654321\"}"
+        },
+        "url": "http://localhost:5000/api/v1/auth/login"
+      }
+    },
+    {
+      "name": "Create Order",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"items\":[{\"productId\":\"test\",\"quantity\":1,\"price\":100,\"name\":\"Producto Test\"}],\"buyerInfo\":{\"email\":\"test@test.com\",\"name\":\"Test\"}}"
+        },
+        "url": "http://localhost:5000/api/v1/orders"
+      }
+    }
+  ]
+}

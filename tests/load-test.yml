@@ -1,0 +1,24 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 10
+      arrivalRate: 5
+  defaults:
+    headers:
+      Content-Type: "application/json"
+scenarios:
+  - name: "Health check"
+    flow:
+      - get:
+          url: "/health"
+  - name: "Get products"
+    flow:
+      - get:
+          url: "/api/v1/products"
+  - name: "Login flow"
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "test@user.com"
+            password: "654321"

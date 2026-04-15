@@ -1,5 +1,6 @@
 // src/models/Category.js
 // Define el esquema y el modelo para las categorías de productos (ES Modules)
+
 import mongoose from 'mongoose';
 
 const CategorySchema = new mongoose.Schema({

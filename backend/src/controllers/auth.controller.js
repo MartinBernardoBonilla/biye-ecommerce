@@ -1,5 +1,5 @@
 // controllers/auth.controller.js
-import User from '../models/User.js'; // CRÍTICO: Usar import y añadir .js
+import User from '../models/user.js'; // CRÍTICO: Usar import y añadir .js
 import asyncHandler from '../middleware/asyncHandler.middleware.js'; // CRÍTICO: Usar import y añadir .js
 import jwt from 'jsonwebtoken';
 

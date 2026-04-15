@@ -1,6 +1,6 @@
 // src/controllers/categories.controller.js
 // Lógica para las rutas de categorías (ES Modules)
-import Category from '../models/Category.js';
+import Category from '../models/category.js';
 
 // @route   POST /api/v1/categories
 // @desc    Crear una nueva categoría

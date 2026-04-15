@@ -1,92 +1,70 @@
+// lib/features/payment_methods/domain/entities/payment_method.dart
+
 class PaymentMethod {
   final String id;
-  final String type; // 'card', 'mercadopago', 'other'
-  final CardDetails? cardDetails;
-  final String? mpPaymentMethodId;
-  final String? mpPaymentTypeId;
+  final String type;
+  final String name;
+  final String displayName;
   final bool isDefault;
-  final bool isActive;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final CardDetails? cardDetails;
 
-  PaymentMethod({
+  const PaymentMethod({
     required this.id,
     required this.type,
+    required this.name,
+    required this.displayName,
+    this.isDefault = false,
     this.cardDetails,
-    this.mpPaymentMethodId,
-    this.mpPaymentTypeId,
-    required this.isDefault,
-    required this.isActive,
-    required this.createdAt,
-    required this.updatedAt,
   });
 
-  // ✅ Agregar fromJson
   factory PaymentMethod.fromJson(Map<String, dynamic> json) {
     return PaymentMethod(
-      id: json['_id'],
-      type: json['type'],
+      id: json['id'] ?? '',
+      type: json['type'] ?? '',
+      name: json['name'] ?? '',
+      displayName: json['displayName'] ??
+          '${json['brand'] ?? ''} **** ${json['lastFourDigits'] ?? ''}',
+      isDefault: json['isDefault'] ?? false,
       cardDetails: json['cardDetails'] != null
           ? CardDetails.fromJson(json['cardDetails'])
-          : null,
-      mpPaymentMethodId: json['mpPaymentMethodId'],
-      mpPaymentTypeId: json['mpPaymentTypeId'],
-      isDefault: json['isDefault'] ?? false,
-      isActive: json['isActive'] ?? true,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+          : (json['brand'] != null
+              ? CardDetails(
+                  brand: json['brand'],
+                  lastFourDigits: json['lastFourDigits'] ?? '',
+                  expirationMonth:
+                      int.tryParse(json['expirationMonth'].toString()) ?? 0,
+                  expirationYear:
+                      int.tryParse(json['expirationYear'].toString()) ?? 0,
+                  cardholderName: json['cardholderName'] ?? '',
+                )
+              : null),
     );
   }
 
-  // ✅ Agregar toJson
+  // ✅ Agregamos toJson()
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'type': type,
-      if (cardDetails != null) 'cardDetails': cardDetails!.toJson(),
-      if (mpPaymentMethodId != null) 'mpPaymentMethodId': mpPaymentMethodId,
-      if (mpPaymentTypeId != null) 'mpPaymentTypeId': mpPaymentTypeId,
+      'name': name,
+      'displayName': displayName,
       'isDefault': isDefault,
-      'isActive': isActive,
+      'cardDetails': cardDetails?.toJson(),
+      if (cardDetails != null) 'cardDetails': cardDetails!.toJson(),
     };
-  }
-
-  String get displayName {
-    if (type == 'card' && cardDetails != null) {
-      return '${cardDetails!.brand.toUpperCase()} •••• ${cardDetails!.lastFourDigits}';
-    }
-    if (type == 'mercadopago') {
-      return 'Mercado Pago';
-    }
-    return 'Otro';
-  }
-
-  String get iconName {
-    if (type == 'card' && cardDetails != null) {
-      switch (cardDetails!.brand.toLowerCase()) {
-        case 'visa':
-          return 'visa';
-        case 'mastercard':
-          return 'mastercard';
-        case 'amex':
-          return 'amex';
-        default:
-          return 'credit_card';
-      }
-    }
-    return 'payment';
   }
 }
 
 class CardDetails {
-  final String lastFourDigits;
   final String brand;
-  final String expirationMonth;
-  final String expirationYear;
+  final String lastFourDigits;
+  final int expirationMonth;
+  final int expirationYear;
   final String cardholderName;
 
-  CardDetails({
-    required this.lastFourDigits,
+  const CardDetails({
     required this.brand,
+    required this.lastFourDigits,
     required this.expirationMonth,
     required this.expirationYear,
     required this.cardholderName,
@@ -94,18 +72,19 @@ class CardDetails {
 
   factory CardDetails.fromJson(Map<String, dynamic> json) {
     return CardDetails(
-      lastFourDigits: json['lastFourDigits'],
-      brand: json['brand'],
-      expirationMonth: json['expirationMonth'],
-      expirationYear: json['expirationYear'],
-      cardholderName: json['cardholderName'],
+      brand: json['brand'] ?? '',
+      lastFourDigits: json['lastFourDigits'] ?? '',
+      expirationMonth: int.tryParse(json['expirationMonth'].toString()) ?? 0,
+      expirationYear: int.tryParse(json['expirationYear'].toString()) ?? 0,
+      cardholderName: json['cardholderName'] ?? '',
     );
   }
 
+  // ✅ También agregamos toJson() a CardDetails
   Map<String, dynamic> toJson() {
     return {
-      'lastFourDigits': lastFourDigits,
       'brand': brand,
+      'lastFourDigits': lastFourDigits,
       'expirationMonth': expirationMonth,
       'expirationYear': expirationYear,
       'cardholderName': cardholderName,

@@ -1,6 +1,6 @@
 // src/controllers/coupons.controller.js
 import asyncHandler from '../middleware/asyncHandler.middleware.js';
-import Coupon from '../models/Coupon.js';
+import Coupon from '../models/coupon.js';
 
 // GET /api/v1/coupons
 export const getCoupons = asyncHandler(async (req, res) => {

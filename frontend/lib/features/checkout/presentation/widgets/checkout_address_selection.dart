@@ -1,14 +1,15 @@
-// lib/features/checkout/presentation/widgets/address_selection.dart
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:biye/features/address/domain/entities/address.dart';
+import '../bloc/checkout_bloc.dart';
+import '../bloc/checkout_event.dart';
 
-class AddressSelection extends StatelessWidget {
+class CheckoutAddressSelection extends StatelessWidget {
   final List<Address> addresses;
   final Address? selectedAddress;
   final Function(Address) onAddressSelected;
 
-  const AddressSelection({
+  const CheckoutAddressSelection({
     super.key,
     required this.addresses,
     required this.selectedAddress,
@@ -17,6 +18,7 @@ class AddressSelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('📍 CheckoutAddressSelection - addresses: ${addresses.length}');
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -43,9 +45,38 @@ class AddressSelection extends StatelessWidget {
             ),
           ),
           if (addresses.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('No tienes direcciones guardadas'),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Icon(Icons.location_off, size: 48, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No tienes direcciones guardadas',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Agrega una dirección para continuar',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final result =
+                          await Navigator.pushNamed(context, '/addresses/add');
+                      if (result == true) {
+                        context.read<CheckoutBloc>().add(LoadCheckoutData());
+                      }
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Agregar dirección'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueGrey[800],
+                    ),
+                  ),
+                ],
+              ),
             )
           else
             ...addresses.map((address) => _AddressTile(
@@ -56,11 +87,12 @@ class AddressSelection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextButton.icon(
-              onPressed: () {
-                // Navegar a agregar dirección
-                Navigator.pushNamed(context, '/addresses/add').then((_) {
-                  // Recargar datos
-                });
+              onPressed: () async {
+                final result =
+                    await Navigator.pushNamed(context, '/addresses/add');
+                if (result == true) {
+                  context.read<CheckoutBloc>().add(LoadCheckoutData());
+                }
               },
               icon: const Icon(Icons.add),
               label: const Text('Agregar nueva dirección'),

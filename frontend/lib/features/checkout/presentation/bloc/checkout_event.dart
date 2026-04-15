@@ -1,8 +1,8 @@
 // lib/features/checkout/presentation/bloc/checkout_event.dart
 
 import 'package:equatable/equatable.dart';
-import 'package:biye/features/address/domain/entities/address.dart';
-import 'package:biye/features/payment_methods/domain/entities/payment_method.dart';
+import '../../../address/domain/entities/address.dart';
+import '../../../payment_methods/domain/entities/payment_method.dart';
 
 abstract class CheckoutEvent extends Equatable {
   const CheckoutEvent();
@@ -10,7 +10,13 @@ abstract class CheckoutEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadCheckoutData extends CheckoutEvent {}
+class LoadCheckoutData extends CheckoutEvent {
+  const LoadCheckoutData();
+}
+
+class InitializeCheckout extends CheckoutEvent {
+  const InitializeCheckout();
+}
 
 class SelectAddress extends CheckoutEvent {
   final Address address;
@@ -26,4 +32,17 @@ class SelectPaymentMethod extends CheckoutEvent {
   List<Object?> get props => [method];
 }
 
-class ConfirmOrder extends CheckoutEvent {}
+class ConfirmOrder extends CheckoutEvent {
+  const ConfirmOrder();
+}
+
+class CheckPaymentStatus extends CheckoutEvent {
+  final String orderId;
+  const CheckPaymentStatus({required this.orderId});
+  @override
+  List<Object?> get props => [orderId];
+}
+
+class StopPolling extends CheckoutEvent {
+  const StopPolling();
+}

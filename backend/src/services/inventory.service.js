@@ -1,6 +1,6 @@
 // src/services/inventory.service.js
-import Product from '../models/Product.model.js';
-import Order from '../models/Order.js'; 
+import Product from '../models/product.model.js';
+import Order from '../models/order.js'; 
 
 /**
  * @description Maneja la lógica de negocio para actualizar una orden y el stock de productos

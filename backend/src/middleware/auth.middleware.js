@@ -1,44 +1,58 @@
-// src/middleware/auth.middleware.js
 import jwt from 'jsonwebtoken';
-import asyncHandler from './asyncHandler.middleware.js';
-import User from '../models/User.js';
+import User from '../models/user.js';
 
-export const protect = asyncHandler(async (req, res, next) => {
+/**
+ * Middleware para proteger rutas que requieren autenticación
+ */
+export const protect = async (req, res, next) => {
   let token;
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
+  // Verificar si el token está en el header Authorization
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
   }
 
   if (!token) {
-    res.status(401);
-    throw new Error('No autorizado, no se encontró token');
+    return res.status(401).json({
+      success: false,
+      message: 'No autorizado, no se proporcionó token'
+    });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.userId || decoded.id).select('-password');
+    
+    // Obtener el usuario (soportar tanto decoded.id como decoded.userId)
+    const userId = decoded.userId || decoded.id;
+    req.user = await User.findById(userId).select('-password');
 
     if (!req.user) {
-      res.status(401);
-      throw new Error('Usuario no encontrado');
+      return res.status(401).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
     }
 
     next();
   } catch (error) {
-    res.status(401);
-    throw new Error('No autorizado, token inválido');
+    console.error('❌ Auth error:', error.message);
+    return res.status(401).json({
+      success: false,
+      message: 'No autorizado, token inválido'
+    });
   }
-});
+};
 
+/**
+ * Middleware para verificar si es administrador
+ */
 export const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
-    res.status(403);
-    throw new Error('No autorizado, requiere rol admin');
+    return res.status(403).json({
+      success: false,
+      message: 'Acceso denegado. Se requieren permisos de administrador'
+    });
   }
 };

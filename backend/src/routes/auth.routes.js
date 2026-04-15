@@ -7,7 +7,7 @@ import { body } from 'express-validator';
 import { loginUser, registerUser, getUserProfile } from '../controllers/auth.controller.js';
 import validate from '../middleware/validation.middleware.js'; 
 import { protect } from '../middleware/auth.middleware.js';
-import User from '../models/User.js';
+import User from '../models/user.js';
 // CORRECCIÓN: Importar como named export
 import { generateToken } from '../utils/generateToken.js';
 

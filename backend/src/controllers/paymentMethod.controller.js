@@ -1,4 +1,4 @@
-import PaymentMethod from '../models/PaymentMethod.js';
+import PaymentMethod from '../models/paymentMethod.js';
 
 // Obtener todos los métodos de pago del usuario
 export const getPaymentMethods = async (req, res) => {

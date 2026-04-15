@@ -1,4 +1,4 @@
-import './config/env.js'; // 🔥 PRIMERA LÍNEA REAL
+import './config/env.js';
 
 import app from './app.js';
 import { connectDB } from './config/database.js';
@@ -6,18 +6,27 @@ import redisClient from './config/redis.js';
 
 const PORT = process.env.PORT || 5000;
 
-// logs ahora sí
+// 🔥 IMPORTAR RUTAS
+import paymentsRoutes from './routes/payments.routes.js';
+import userRoutes from './routes/users.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import orderRoutes from './routes/orders.routes.js';
+import productRoutes from './routes/products.routes.js';
+import categoryRoutes from './routes/categories.routes.js';
+
+// logs
 console.log('=== 🚀 INICIANDO SERVIDOR BIYE ===');
 console.log('MONGODB_URI:', !!process.env.MONGODB_URI);
 console.log('JWT_SECRET:', !!process.env.JWT_SECRET);
 console.log('MP TOKEN:', !!process.env.MERCADOPAGO_ACCESS_TOKEN);
 
-// Rutas
-import paymentsRoutes from './routes/payments.routes.js';
-
-
-// 🔗 Registrar rutas ANTES de listen
+// 🔥 REGISTRAR TODAS LAS RUTAS
 app.use('/api/v1/payments', paymentsRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/categories', categoryRoutes);
 
 (async () => {
   try {

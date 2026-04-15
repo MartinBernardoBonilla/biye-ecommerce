@@ -1,36 +1,33 @@
-// Este archivo define la estructura de datos que representa un artículo dentro del carrito.
-// Es una entidad pura, sin lógica de negocio (solo datos).
-class CartItem {
+import 'package:equatable/equatable.dart';
+
+class CartItem extends Equatable {
   final String id;
   final String name;
   final double price;
   final int quantity;
-  // Añadimos la URL de la imagen y la descripción
   final String imageUrl;
   final String description;
 
-  CartItem({
+  const CartItem({
     required this.id,
     required this.name,
     required this.price,
     required this.quantity,
-    required this.imageUrl, // Ahora CartItem soporta imageUrl
-    required this.description, // Ahora CartItem soporta description
+    required this.imageUrl,
+    required this.description,
   });
 
-  // ✅ Agregar fromJson
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
-      id: json['id'],
-      name: json['name'],
-      price: json['price'].toDouble(),
-      quantity: json['quantity'],
-      imageUrl: json['imageUrl'],
-      description: json['description'],
+      id: json['id'] ?? json['productId'] ?? '',
+      name: json['name'] ?? '',
+      price: (json['price'] ?? 0).toDouble(),
+      quantity: json['quantity'] ?? 1,
+      imageUrl: json['imageUrl'] ?? '',
+      description: json['description'] ?? '',
     );
   }
 
-  // ✅ Agregar toJson
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -42,7 +39,6 @@ class CartItem {
     };
   }
 
-  // Método para crear una copia del CartItem con una nueva cantidad.
   CartItem copyWith({
     String? id,
     String? name,
@@ -61,9 +57,6 @@ class CartItem {
     );
   }
 
-  // Opcional: Para facilitar la depuración
   @override
-  String toString() {
-    return 'CartItem(id: $id, name: $name, price: $price, quantity: $quantity, description: $description)';
-  }
+  List<Object?> get props => [id, name, price, quantity, imageUrl, description];
 }
