@@ -1,17 +1,28 @@
-# Usar la versión que SABEMOS que funciona
-FROM node:18-alpine
+# ── Etapa 1: dependencias ──────────────────────────────────────
+FROM node:20-alpine AS deps
 
 WORKDIR /app
 
-# Copiar solo lo necesario
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
-# Copiar código
-COPY . .
+# ── Etapa 2: producción ────────────────────────────────────────
+FROM node:20-alpine AS runner
 
-# Exponer puerto
+# Usuario no-root (buena práctica de seguridad)
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+# Copiar dependencias ya instaladas
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copiar código fuente
+COPY src ./src
+COPY package.json ./
+
+USER appuser
+
 EXPOSE 5000
 
-# Comando simple
-CMD ["node", "src/index.js"]
+CMD ["node", "--import", "dotenv/config", "src/index.js"]

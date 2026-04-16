@@ -46,3 +46,6 @@ tmp/
 *.pdf
 *.docx
 *.txt
+
+# Flutter (no va en la imagen del backend)
+../frontend
