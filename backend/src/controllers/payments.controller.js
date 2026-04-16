@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import asyncHandler from '../middleware/asyncHandler.middleware.js';
-import PaymentService from '../services/payment.service.js';
+import * as PaymentService from '../services/payment.service.js';
 
 export const createMercadoPagoPreference = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
