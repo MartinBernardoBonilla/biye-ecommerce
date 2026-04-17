@@ -1,15 +1,18 @@
 class AppConstants {
   // ============================================
-  // 1. URLs DEL BACKEND (TU IP REAL)
+  // 1. URLs DEL BACKEND (RAILWAY)
   // ============================================
 
-  // ✅ TU IP REAL: 192.168.1.49
-  static const String apiBaseUrl = 'http://192.168.1.49:5000/api/v1';
+  // ✅ URL REAL DE RAILWAY
+  // Agregamos https:// y el sufijo de la API
+  static const String apiBaseUrl =
+      'https://biye-ecommerce-production.up.railway.app/api/v1';
 
-  // Para imágenes (puedes usar Cloudinary directamente)
-  static const String imageBaseUrl = 'http://192.168.1.49:5000';
+  // Base para imágenes y Webhooks
+  static const String imageBaseUrl =
+      'https://biye-ecommerce-production.up.railway.app';
 
-  // Cloudinary (si subes imágenes directo desde Flutter)
+  // Cloudinary (Mantenelos igual, están bien)
   static const String cloudinaryCloudName = 'dwchpxcrv';
   static const String cloudinaryUploadPreset = 'biye_products';
 
@@ -64,7 +67,7 @@ class AppConstants {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Origin': 'http://localhost:42321', // Puerto de Flutter web
+      'Origin': 'https://biye-ecommerce-production.up.railway.app',
       'Access-Control-Request-Method': 'GET,POST,PUT,DELETE,OPTIONS',
     };
   }
@@ -75,25 +78,15 @@ class AppConstants {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Authorization': 'Bearer $token',
-      'Origin': 'http://localhost:42321',
+      'Origin': 'https://biye-ecommerce-production.up.railway.app',
     };
   }
 
   // ============================================
-  // 7. HELPERS
+  // 7. HELPERS (Aquí es donde daba el error)
   // ============================================
 
-  // Helper para URLs de imagen
-  static String getFullImageUrl(String path) {
-    if (path.isEmpty) return '';
-    if (path.startsWith('http')) return path;
-    if (path.startsWith('/')) return '$imageBaseUrl$path';
-    return '$imageBaseUrl/$path';
-  }
-
-  // Helper para construir URLs de API
   static String buildApiUrl(String endpoint) {
-    // Si el endpoint ya tiene /api/v1, removerlo
     String cleanEndpoint = endpoint;
 
     if (endpoint.startsWith('/api/v1')) {
@@ -102,17 +95,11 @@ class AppConstants {
       cleanEndpoint = endpoint.substring(6);
     }
 
-    // Asegurar que empiece con /
     if (!cleanEndpoint.startsWith('/')) {
       cleanEndpoint = '/$cleanEndpoint';
     }
 
+    // ✅ Ahora coincide con el nombre de la variable arriba
     return '$apiBaseUrl$cleanEndpoint';
-  }
-
-  // Helper para Cloudinary
-  static String getCloudinaryUrl(String publicId,
-      {int width = 800, int height = 600}) {
-    return 'https://res.cloudinary.com/$cloudinaryCloudName/image/upload/w_$width,h_$height,c_fill/$publicId';
   }
 }
