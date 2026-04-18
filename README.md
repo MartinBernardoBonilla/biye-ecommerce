@@ -22,7 +22,14 @@ tarjeta online y confirmación en tiempo real mediante webhooks y polling.
 | Modo Sandbox / Producción | ✅ |
 | Autenticación JWT | ✅ |
 | Rate limiting | ✅ |
+## 🌐 Demo en vivo
 
+**API Backend:** https://biye-ecommerce-production.up.railway.app
+
+> La demo pública corre en modo **sandbox** para evaluación segura.
+> La integración con MercadoPago fue probada exitosamente en producción
+> con transferencias reales. Credenciales productivas disponibles para
+> demostración en entrevista.
 ---
 
 ## Arquitectura
