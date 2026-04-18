@@ -23,13 +23,15 @@ const corsOptions = {
     if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    
+
     // En producción, whitelist específica
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       'https://biye-web.com',
+      'http://localhost:42321',
+      'http://localhost:3000',
     ].filter(Boolean);
-    
+
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -39,10 +41,10 @@ const corsOptions = {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'Accept', 
-    'Origin', 
+    'Content-Type',
+    'Authorization',
+    'Accept',
+    'Origin',
     'X-Requested-With',
     'ngrok-skip-browser-warning' // 👈 AGREGADO PARA NGROK
   ],
@@ -99,7 +101,7 @@ app.use('/api/v1/payment-methods', paymentMethodsRoutes);
 
 // Health checks
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: '✅ Servidor Biye ES Modules',
     environment: process.env.NODE_ENV || 'development',
     cors: 'configurado',
@@ -109,7 +111,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'healthy',
     modules: 'ES Modules',
     timestamp: new Date().toISOString()

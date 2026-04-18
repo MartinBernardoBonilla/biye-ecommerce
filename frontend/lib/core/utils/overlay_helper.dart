@@ -6,12 +6,7 @@ class OverlayHelper {
     required String productName,
     required VoidCallback onViewCart,
   }) {
-    print('🎯 Intentando mostrar overlay para $productName');
-
     final overlayState = Overlay.of(context);
-
-    print('✅ Overlay encontrado, creando entry...');
-
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -22,15 +17,10 @@ class OverlayHelper {
       ),
     );
 
-    print('📦 Insertando overlay...');
     overlayState.insert(overlayEntry);
-    print('✅ Overlay insertado');
 
     Future.delayed(const Duration(seconds: 10), () {
-      if (overlayEntry.mounted) {
-        print('⏰ Auto-removiendo overlay');
-        overlayEntry.remove();
-      }
+      if (overlayEntry.mounted) overlayEntry.remove();
     });
   }
 }
@@ -86,49 +76,40 @@ class __AddedToCartOverlayState extends State<_AddedToCartOverlay> {
                   ),
                 ),
               ),
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                onEnter: (_) {
-                  print('🟡 HOVER ENTER - ${DateTime.now()}');
-                  setState(() => _isHovered = true);
+              InkWell(
+                onTap: () {
+                  widget.overlayEntry.remove();
+                  widget.onViewCart();
                 },
-                onExit: (_) {
-                  print('🟡 HOVER EXIT - ${DateTime.now()}');
-                  setState(() => _isHovered = false);
+                onHover: (hovering) {
+                  setState(() => _isHovered = hovering);
                 },
-                child: GestureDetector(
-                  onTap: () {
-                    print('👆 Botón VER presionado - ${DateTime.now()}');
-                    widget.overlayEntry.remove();
-                    widget.onViewCart();
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10), // MÁS GRANDE
-                    decoration: BoxDecoration(
-                      color: _isHovered ? Colors.green[50]! : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: _isHovered
-                          ? Border.all(color: Colors.green, width: 2)
-                          : null,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      'VER',
-                      style: TextStyle(
-                        color: _isHovered ? Colors.green[800]! : Colors.green,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        decoration:
-                            _isHovered ? TextDecoration.underline : null,
+                borderRadius: BorderRadius.circular(20),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _isHovered ? Colors.green[50]! : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: _isHovered
+                        ? Border.all(color: Colors.green, width: 2)
+                        : null,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
                       ),
+                    ],
+                  ),
+                  child: Text(
+                    'VER',
+                    style: TextStyle(
+                      color: _isHovered ? Colors.green[800]! : Colors.green,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      decoration: _isHovered ? TextDecoration.underline : null,
                     ),
                   ),
                 ),
