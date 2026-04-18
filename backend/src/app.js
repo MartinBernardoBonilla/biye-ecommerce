@@ -27,6 +27,7 @@ const corsOptions = {
     // En producción, whitelist específica
     const allowedOrigins = [
       process.env.FRONTEND_URL,
+      'https://biye-app.vercel.app',
       'https://biye-web.com',
       'http://localhost:42321',
       'http://localhost:3000',
