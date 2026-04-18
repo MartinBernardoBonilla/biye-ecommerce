@@ -18,7 +18,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-import 'shared/utils/network_test.dart';
+//import 'shared/utils/network_test.dart';
 
 // PROVIDER
 import 'package:provider/provider.dart';
@@ -104,7 +104,7 @@ void main() async {
   );
 
   if (kDebugMode) {
-    NetworkTest.runTest();
+    //   NetworkTest.runTest();
   }
 
   runApp(const MyApp());
