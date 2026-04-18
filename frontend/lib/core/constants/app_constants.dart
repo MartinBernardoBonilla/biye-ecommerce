@@ -1,18 +1,14 @@
 class AppConstants {
-  // ============================================
-  // 1. URLs DEL BACKEND (RAILWAY)
-  // ============================================
-
-  // ✅ URL REAL DE RAILWAY
-  // Agregamos https:// y el sufijo de la API
+// ============================================
+// 1. URLs DEL BACKEND
+// ============================================
   static const String apiBaseUrl =
       'https://biye-ecommerce-production.up.railway.app/api/v1';
 
-  // Base para imágenes y Webhooks
   static const String imageBaseUrl =
       'https://biye-ecommerce-production.up.railway.app';
 
-  // Cloudinary (Mantenelos igual, están bien)
+// Cloudinary
   static const String cloudinaryCloudName = 'dwchpxcrv';
   static const String cloudinaryUploadPreset = 'biye_products';
 
