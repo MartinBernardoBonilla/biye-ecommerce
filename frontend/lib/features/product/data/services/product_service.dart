@@ -19,7 +19,7 @@ class ProductService {
       final response = await http.get(
         Uri.parse(url), // 👈 USAR URL CONSTRUIDA
         headers: {
-          'Origin': 'http://localhost:42321',
+          'Origin': 'https://biye-app.vercel.app',
           'Accept': 'application/json',
         },
       );
@@ -79,7 +79,7 @@ class ProductService {
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'Origin': 'http://localhost:42321',
+          'Origin': 'https://biye-app.vercel.app',
           'Accept': 'application/json',
         },
       );
