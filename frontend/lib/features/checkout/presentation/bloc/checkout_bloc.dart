@@ -68,7 +68,14 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     _addressBloc.add(LoadAddresses());
     _paymentMethodBloc.add(LoadPaymentMethods());
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.any([
+      _addressBloc.stream.firstWhere((s) => s is AddressesLoaded || s is AddressError),
+      Future.delayed(const Duration(seconds: 5)),
+    ]);
+    await Future.any([
+      _paymentMethodBloc.stream.firstWhere((s) => s is PaymentMethodsLoaded || s is PaymentMethodError),
+      Future.delayed(const Duration(seconds: 5)),
+    ]);
 
     final addresses = _getAddressesFromState();
     final paymentMethods = _getPaymentMethodsFromState();
