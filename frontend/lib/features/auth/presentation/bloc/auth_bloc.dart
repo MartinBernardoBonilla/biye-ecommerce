@@ -249,7 +249,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (hasToken) {
         debugPrint('ℹ️ [AUTH] Firebase null pero hay JWT - manteniendo sesión');
         final userData = await AuthStorage.getUserData();
-        emit(AuthTokenAuthenticated(userData: userData));
+        final token = await AuthStorage.getToken();
+        emit(AuthTokenAuthenticated(userData: userData, token: token ?? ''));
       } else {
         emit(AuthUnauthenticated());
       }
