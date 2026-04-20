@@ -18,7 +18,7 @@ dependencies:
   shimmer: ^3.0.0
   cached_network_image: ^3.4.1
 
-  # State Management & Architecture
+  # State Management
   equatable: ^2.0.7
   dartz: ^0.10.1
   bloc: ^9.0.0
@@ -60,24 +60,24 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/aiconbe.jpg"
+  image_path: "assets/images/aiconbe.png"   # ← Corregido a .png
   min_sdk_android: 21
 
 flutter:
   uses-material-design: true
 
+  # Assets organizados correctamente
   assets:
     - assets/images/
-    - assets/sounds/click.mp3
-    - assets/sounds/splash.mp3
-    - assets/sounds/pago.mp3   # ✅ Eliminado el duplicado
+    - assets/sounds/
 
+  # Fuentes
   fonts:
     - family: Pacifico
       fonts:
         - asset: assets/fonts/Pacifico-Regular.ttf
 
-# ✅ analyzer FUERA del bloque flutter, al mismo nivel
+# Analyzer
 analyzer:
   language:
     strict-raw-types: true

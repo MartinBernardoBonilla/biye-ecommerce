@@ -13,7 +13,7 @@ Ofrece un sistema de pagos completo con **Mercado Pago** (QR presencial y tarjet
 
 ## ✨ Demo en Vivo
 
-- **Frontend (Web)**: [Ver Demo](https://biye-flutter.vercel.app)  
+- **Frontend (Web)**: [Ver Demo](https://biye-app.vercel.app)
 - **Backend API**: [https://biye-ecommerce-production.up.railway.app](https://biye-ecommerce-production.up.railway.app)
 
 > Proyecto desarrollado con enfoque en robustez de pagos y escalabilidad.
