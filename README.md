@@ -5,9 +5,9 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-8.0-47A248?style=flat&logo=mongodb&logoColor=white)](https://mongodb.com)
 [![Mercado Pago](https://img.shields.io/badge/Mercado_Pago-009EE3?style=flat&logo=mercadopago&logoColor=white)](https://mercadopago.com)
 
-**Biye** es una plataforma de e-commerce fullstack moderna y genérica, diseñada para ser adaptable a cualquier tipo de negocio.
+Biye es una plataforma de e-commerce fullstack moderna y flexible, pensada para adaptarse fácilmente a distintos tipos de negocio.
 
-Ofrece un sistema de pagos completo con **Mercado Pago** (QR presencial y tarjeta online), confirmación en tiempo real mediante webhooks + polling, y una arquitectura limpia lista para personalizar.
+Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR presencial como tarjetas online), incluyendo confirmación en tiempo real mediante webhooks y polling, y está construida sobre una arquitectura limpia y escalable, lista para personalizar y crecer.
 
 ---
 
