@@ -20,7 +20,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   final CartBloc _cartBloc;
   final AddressBloc _addressBloc;
   final PaymentMethodBloc _paymentMethodBloc;
-  final String _apiBaseUrl = 'http://192.168.1.49:5000';
+  final String _apiBaseUrl = 'https://biye-ecommerce-production.up.railway.app';
 
   // Control de polling
   bool _isPollingActive = false;

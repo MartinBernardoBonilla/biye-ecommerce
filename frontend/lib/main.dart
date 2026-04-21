@@ -96,6 +96,8 @@ import 'package:biye/core/web/web_import.dart'
 
 import 'package:biye/features/cart/presentation/pages/cart_page.dart';
 
+import 'package:biye/core/constants/app_constants.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -150,9 +152,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final baseUrl = kDebugMode
-        ? 'https://shanae-shearless-rakishly.ngrok-free.dev'
-        : 'https://api.biye.com';
+    final baseUrl = 'https://biye-ecommerce-production.up.railway.app';
 
     return MultiProvider(
       providers: [
@@ -204,14 +204,14 @@ class _MyAppState extends State<MyApp> {
               ),
             ),
           ),
-          BlocProvider<AdminBloc>(
-            create: (context) => AdminBloc(
-              repository: AdminRepositoryImpl(
-                baseUrl: baseUrl,
-                client: http.Client(),
-              ),
-            ),
-          ),
+          // BlocProvider<AdminBloc>(          ← Comentado temporalmente
+//   create: (context) => AdminBloc(
+//     repository: AdminRepositoryImpl(
+//       baseUrl: AppConstants.imageBaseUrl,
+//       client: http.Client(),
+//     ),
+//   ),
+// ),
           BlocProvider<FavoritesBloc>(
             create: (context) => FavoritesBloc(
               repository: FavoritesRepository(
