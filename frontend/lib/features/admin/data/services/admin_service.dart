@@ -48,7 +48,6 @@ class AdminService {
     };
 
     await apiClient.post('admin/products', body);
-    print('🧪 AdminService usando ApiClient: $apiClient');
   }
 
   // =========================

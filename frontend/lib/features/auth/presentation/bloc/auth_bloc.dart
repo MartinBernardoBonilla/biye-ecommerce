@@ -19,43 +19,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.apiClient,
   })  : _authService = authService ?? FirebaseAuthService(),
         super(AuthInitial()) {
-    // Registrar eventos
     on<AuthStarted>(_onAuthStarted);
     on<AuthLoginRequested>(_onLoginRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthUserChanged>(_onUserChanged);
     on<AuthCheckStatus>(_onCheckStatus);
 
-    // Escuchar cambios en Firebase Auth
     _authService.authStateChanges.listen(
       (user) => add(AuthUserChanged(user)),
     );
 
-    // Verificar estado al iniciar
     add(AuthCheckStatus());
   }
 
   // ================================
-  // APP START - NUEVO MÉTODO DEFINIDO
+  // INIT
   // ================================
   void _onAuthStarted(
     AuthStarted event,
     Emitter<AuthState> emit,
   ) {
-    final user = _authService.currentUser;
-
-    if (user != null) {
-      // Si hay usuario en Firebase, verificamos token
-      add(AuthCheckStatus());
-    } else {
-      // No hay usuario, verificamos si hay token guardado
-      add(AuthCheckStatus());
-    }
+    add(AuthCheckStatus());
   }
 
   // ================================
-// VERIFICAR TOKEN GUARDADO (CORREGIDO)
-// ================================
+  // CHECK STATUS
+  // ================================
   Future<void> _onCheckStatus(
     AuthCheckStatus event,
     Emitter<AuthState> emit,
@@ -64,72 +53,40 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final userData = await AuthStorage.getUserData();
     final firebaseUser = _authService.currentUser;
 
-    print('🔍 [AUTH] Verificando estado:');
-    print('   - Token existe: $hasToken');
-    print('   - Firebase user: ${firebaseUser?.email}');
-    print('   - Role guardado: ${userData['role']}');
-
     if (hasToken) {
       final token = await AuthStorage.getToken();
+
       if (token != null) {
-        // Restaurar token en ApiClient
         apiClient.setToken(token);
 
         if (firebaseUser != null) {
-          // ✅ Caso 1: Firebase + Token
-          debugPrint('✅ [AUTH] Sesión completa restaurada');
           emit(AuthAuthenticated(
             user: firebaseUser,
             userData: userData,
           ));
         } else {
-          // 🔥 CORREGIDO: Si hay token pero no Firebase, intentar obtener usuario de Firebase
-          debugPrint(
-              '🔄 [AUTH] Token presente, intentando restaurar Firebase...');
-
-          // Intentar obtener usuario con el token
-          try {
-            // Aquí podrías intentar obtener el perfil del usuario desde tu backend
-            // Por ahora, emitimos un estado especial o mantenemos el token
-
-            // Opción 1: Emitir un estado solo con token (recomendado)
-            emit(AuthTokenAuthenticated(
-              userData: userData,
-              token: token,
-            ));
-
-            // Opción 2: Intentar recuperar Firebase (depende de tu configuración)
-            // await _authService.signInWithCustomToken(token);
-          } catch (e) {
-            debugPrint('❌ Error restaurando Firebase: $e');
-            // Si falla, mantener sesión con token
-            emit(AuthTokenAuthenticated(
-              userData: userData,
-              token: token,
-            ));
-          }
+          emit(AuthTokenAuthenticated(
+            userData: userData,
+            token: token,
+          ));
         }
         return;
       }
     }
 
-    // No hay token
-    debugPrint('🔴 [AUTH] No hay sesión activa');
     emit(AuthUnauthenticated());
   }
 
   // ================================
-// LOGIN
-// ================================
+  // LOGIN 🔥 CORREGIDO
+  // ================================
   Future<void> _onLoginRequested(
     AuthLoginRequested event,
     Emitter<AuthState> emit,
   ) async {
-    debugPrint('🔐 [AUTH] Intento de login para: ${event.email}');
     emit(AuthLoading());
 
     try {
-      // ✅ PRIMERO: Login en el backend (sin Firebase)
       final response = await apiClient.post(
         'auth/login',
         {
@@ -138,80 +95,74 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         },
       );
 
-      debugPrint('📦 [AUTH] Respuesta backend: $response');
+      final data = response['data'];
 
-      if (response['data'] == null) {
-        debugPrint('❌ [AUTH] Respuesta inválida del backend');
+      if (data == null) {
         emit(const AuthError(message: 'Error del servidor'));
         return;
       }
 
-      final backendToken = response['data']?['token'];
-      final userRole = response['data']?['role'] ?? 'user';
-      final userId = response['data']?['_id']?.toString() ?? '';
-      final username = response['data']?['username'] ?? 'Usuario';
+      final String token = data['token'];
+      final String refreshToken = data['refreshToken'];
 
-      if (backendToken == null || backendToken.isEmpty) {
-        debugPrint('❌ [AUTH] No se recibió token del backend');
+      final String userId = data['_id']?.toString() ?? '';
+      final String email = data['email'] ?? event.email;
+      final String role = data['role'] ?? 'user';
+      final String username = data['username'] ?? 'Usuario';
+
+      if (token.isEmpty) {
         emit(const AuthError(message: 'Credenciales inválidas'));
         return;
       }
 
-      // ✅ SEGUNDO: Intentar login en Firebase (opcional, no crítico)
+      // 🔥 FIREBASE (OPCIONAL)
       User? firebaseUser;
+
       try {
         final result = await _authService.signInWithEmailAndPassword(
           email: event.email,
           password: event.password,
         );
         firebaseUser = result.user;
-        debugPrint('✅ [AUTH] Firebase login exitoso');
-      } catch (firebaseError) {
-        debugPrint(
-            '⚠️ [AUTH] Firebase login falló (no crítico): $firebaseError');
-        // No es crítico, el usuario ya está autenticado con el backend
-      }
+      } catch (_) {}
 
-      // ✅ TERCERO: Guardar token del backend
-      await AuthStorage.saveToken(backendToken);
-      await AuthStorage.saveRefreshToken(data['refreshToken']);
+      // 🔥 GUARDAR TOKENS
+      await AuthStorage.saveToken(token);
+      await AuthStorage.saveRefreshToken(refreshToken);
+
       await AuthStorage.saveUserData(
         userId: userId,
-        email: event.email,
-        role: userRole,
-        username: response['data']?['username'], // 👈 AGREGAR
+        email: email,
+        role: role,
+        username: username,
       );
 
-      apiClient.setToken(backendToken);
+      apiClient.setToken(token);
 
-      // ✅ CUARTO: Emitir estado autenticado
+      // 🔥 EMITIR ESTADO
       if (firebaseUser != null) {
         emit(AuthAuthenticated(
           user: firebaseUser,
           userData: {
-            'role': userRole,
             'userId': userId,
-            'email': event.email,
+            'email': email,
+            'role': role,
             'username': username,
           },
         ));
       } else {
-        // Si Firebase falla, igual estamos autenticados con el backend
         emit(AuthTokenAuthenticated(
           userData: {
-            'role': userRole,
             'userId': userId,
-            'email': event.email,
+            'email': email,
+            'role': role,
             'username': username,
           },
-          token: backendToken,
+          token: token,
         ));
       }
-
-      debugPrint('✅ [AUTH] Login completo - Role: $userRole');
     } catch (e) {
-      debugPrint('❌ [AUTH] Error inesperado: $e');
-      emit(AuthError(message: 'Error al iniciar sesión: ${e.toString()}'));
+      emit(AuthError(message: e.toString()));
     }
   }
 
@@ -222,22 +173,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    debugPrint('👋 [AUTH] Cerrando sesión');
+    await AuthStorage.clearAll();
+    apiClient.clearToken();
 
     try {
-      await AuthStorage.clearAll();
-      apiClient.clearToken();
       await _authService.signOut();
-      debugPrint('✅ [AUTH] Logout completado');
-    } catch (e) {
-      debugPrint('❌ [AUTH] Error en logout: $e');
-    }
+    } catch (_) {}
 
     emit(AuthUnauthenticated());
   }
 
   // ================================
-  // CAMBIO EN FIREBASE AUTH
+  // FIREBASE LISTENER
   // ================================
   Future<void> _onUserChanged(
     AuthUserChanged event,
@@ -248,20 +195,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     if (user == null) {
       if (hasToken) {
-        debugPrint('ℹ️ [AUTH] Firebase null pero hay JWT - manteniendo sesión');
         final userData = await AuthStorage.getUserData();
         final token = await AuthStorage.getToken();
-        emit(AuthTokenAuthenticated(userData: userData, token: token ?? ''));
+
+        emit(AuthTokenAuthenticated(
+          userData: userData,
+          token: token ?? '',
+        ));
       } else {
         emit(AuthUnauthenticated());
       }
     } else {
-      // Firebase detectó usuario
       if (!hasToken) {
-        debugPrint('⚠️ [AUTH] Firebase user pero no token - cerrando Firebase');
         await _authService.signOut();
       } else {
-        // Todo bien
         final userData = await AuthStorage.getUserData();
         emit(AuthAuthenticated(user: user, userData: userData));
       }

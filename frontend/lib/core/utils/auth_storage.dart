@@ -12,6 +12,7 @@ class AuthStorage {
   static const String _userIdKey = 'user_id';
   static const String _userEmailKey = 'user_email';
   static const String _userRoleKey = 'user_role';
+  static const String _refreshTokenKey = 'refresh_token';
 
   // Detectar plataforma
   static bool get _isWeb => kIsWeb;

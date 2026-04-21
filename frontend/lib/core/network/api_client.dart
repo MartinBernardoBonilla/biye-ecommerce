@@ -18,7 +18,6 @@ class ApiClient {
   String? _token;
   AuthBloc? authBloc;
 
-  // 🔥 CONTROL DE REFRESH
   bool _isRefreshing = false;
   Completer<void>? _refreshCompleter;
 
@@ -28,7 +27,6 @@ class ApiClient {
 
   Future<void> setToken(String? token) async {
     _token = token;
-
     if (token != null) {
       await AuthStorage.saveToken(token);
     } else {
@@ -65,7 +63,7 @@ class ApiClient {
   // ======================
 
   Future<Map<String, dynamic>> get(String path) async {
-    return _request(() => _client.get(
+    return _request(() async => _client.get(
           Uri.parse('$_baseUrl/$path'),
           headers: await _getHeaders(),
         ));
@@ -75,24 +73,44 @@ class ApiClient {
     String path,
     Map<String, dynamic> body,
   ) async {
-    return _request(() => _client.post(
+    return _request(() async => _client.post(
           Uri.parse('$_baseUrl/$path'),
           headers: await _getHeaders(),
           body: jsonEncode(body),
         ));
   }
 
+  Future<Map<String, dynamic>> put(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    return _request(() async => _client.put(
+          Uri.parse('$_baseUrl/$path'),
+          headers: await _getHeaders(),
+          body: jsonEncode(body),
+        ));
+  }
+
+  Future<Map<String, dynamic>> delete(String path) async {
+    return _request(() async => _client.delete(
+          Uri.parse('$_baseUrl/$path'),
+          headers: await _getHeaders(),
+        ));
+  }
+
+  // ======================
+  // REQUEST HANDLER
+  // ======================
+
   Future<Map<String, dynamic>> _request(
     Future<http.Response> Function() requestFn,
   ) async {
     final response = await requestFn();
 
-    // ✅ OK
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonDecode(response.body);
     }
 
-    // 🔒 401 → intentar refresh
     if (response.statusCode == 401) {
       debugPrint('🔒 401 detectado → intentando refresh');
 
@@ -102,34 +120,28 @@ class ApiClient {
         debugPrint('🔁 Reintentando request...');
         final retryResponse = await requestFn();
 
-        if (retryResponse.statusCode >= 200 &&
-            retryResponse.statusCode < 300) {
+        if (retryResponse.statusCode >= 200 && retryResponse.statusCode < 300) {
           return jsonDecode(retryResponse.body);
         }
       }
 
-      // ❌ FALLÓ REFRESH → LOGOUT
       debugPrint('❌ Refresh falló → logout');
-
       await AuthStorage.clearAll();
       authBloc?.add(AuthLogoutRequested());
 
       throw Exception('SESSION_EXPIRED');
     }
 
-    // ❌ ERROR NORMAL
     final data = jsonDecode(response.body);
     final errorMsg = data['message'] ?? 'Error inesperado';
-
     throw Exception(errorMsg);
   }
 
   // ======================
-  // 🔥 REFRESH TOKEN LOGIC
+  // REFRESH TOKEN
   // ======================
 
   Future<bool> _handleRefreshToken() async {
-    // 🧠 Si ya se está refrescando → esperar
     if (_isRefreshing) {
       debugPrint('⏳ Esperando refresh en progreso...');
       await _refreshCompleter?.future;
@@ -155,15 +167,12 @@ class ApiClient {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         final newToken = data['data']['accessToken'];
 
         if (newToken == null) return false;
 
         await setToken(newToken);
-
         debugPrint('✅ Token refrescado correctamente');
-
         _refreshCompleter?.complete();
 
         return true;
