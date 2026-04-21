@@ -1,31 +1,26 @@
 // controllers/auth.controller.js
-import User from '../models/user.js'; // CRÍTICO: Usar import y añadir .js
-import asyncHandler from '../middleware/asyncHandler.middleware.js'; // CRÍTICO: Usar import y añadir .js
-import jwt from 'jsonwebtoken';
 
-// Función auxiliar para generar el JWT
-const generateToken = (id) => {
-    // Usamos el secreto del .env que se cargó en app.js
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: '30d' // El token expira en 30 días
-    });
-};
+import User from '../models/user.js';
+import asyncHandler from '../middleware/asyncHandler.middleware.js';
 
-// @desc    Registrar un nuevo usuario
-// @route   POST /api/v1/auth/register
-// @access  Public
-export const registerUser = asyncHandler(async (req, res) => { // CRÍTICO: Usar export const
+import {
+    generateAccessToken,
+    generateRefreshToken,
+} from '../utils/generateToken.js';
+
+// ===============================
+// REGISTER
+// ===============================
+export const registerUser = asyncHandler(async (req, res) => {
     const { username, email, password } = req.body;
 
     const userExists = await User.findOne({ email });
 
     if (userExists) {
-        // En lugar de devolver un JSON, lanzamos un error que asyncHandler manejará.
         res.status(400);
         throw new Error('El usuario ya existe con este correo.');
     }
 
-    // Se crea el usuario (la contraseña se hashea automáticamente con el middleware 'pre' del modelo)
     const user = await User.create({
         username,
         email,
@@ -33,7 +28,14 @@ export const registerUser = asyncHandler(async (req, res) => { // CRÍTICO: Usar
     });
 
     if (user) {
-        // Devolvemos la información del usuario y el token
+        const accessToken = generateAccessToken(
+            user._id,
+            user.email,
+            user.role
+        );
+
+        const refreshToken = generateRefreshToken(user._id);
+
         res.status(201).json({
             success: true,
             data: {
@@ -41,8 +43,9 @@ export const registerUser = asyncHandler(async (req, res) => { // CRÍTICO: Usar
                 username: user.username,
                 email: user.email,
                 role: user.role,
-                token: generateToken(user._id),
-            }
+                token: accessToken,        // 🔥 UNIFICADO
+                refreshToken: refreshToken // 🔥 NUEVO
+            },
         });
     } else {
         res.status(400);
@@ -50,17 +53,24 @@ export const registerUser = asyncHandler(async (req, res) => { // CRÍTICO: Usar
     }
 });
 
-// @desc    Autenticar usuario y obtener token
-// @route   POST /api/v1/auth/login
-// @access  Public
+// ===============================
+// LOGIN
+// ===============================
 export const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    // Buscar el usuario, seleccionando explícitamente la contraseña
     const user = await User.findOne({ email }).select('+password');
 
-    // Verificar si el usuario existe y si la contraseña coincide
     if (user && (await user.matchPassword(password))) {
+
+        const accessToken = generateAccessToken(
+            user._id,
+            user.email,
+            user.role
+        );
+
+        const refreshToken = generateRefreshToken(user._id);
+
         res.json({
             success: true,
             data: {
@@ -68,20 +78,22 @@ export const loginUser = asyncHandler(async (req, res) => {
                 username: user.username,
                 email: user.email,
                 role: user.role,
-                token: generateToken(user._id)
+                token: accessToken,        // 🔥 MISMO FORMATO
+                refreshToken: refreshToken // 🔥 NUEVO
             }
         });
+
     } else {
         res.status(401);
         throw new Error('Email o contraseña incorrectos.');
     }
 });
-// @desc    Obtener perfil del usuario (protegida)
-// @route   GET /api/v1/auth/profile
-// @access  Private
-export const getUserProfile = asyncHandler(async (req, res) => { // CRÍTICO: Usar export const
-    // req.user es inyectado por el middleware 'auth'
-    const user = await User.findById(req.user.id); 
+
+// ===============================
+// PROFILE
+// ===============================
+export const getUserProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user.userId);
 
     if (user) {
         res.json({
@@ -91,47 +103,10 @@ export const getUserProfile = asyncHandler(async (req, res) => { // CRÍTICO: Us
                 username: user.username,
                 email: user.email,
                 role: user.role,
-            }
+            },
         });
     } else {
         res.status(404);
         throw new Error('Usuario no encontrado.');
     }
-});
-
-// controllers/admin.controller.js
-export const getAdminStats = asyncHandler(async (req, res) => {
-  const [totalProducts, lowStock, outOfStock, activeProducts, totalOrders, pendingOrders, totalUsers] = await Promise.all([
-    Product.countDocuments(),
-    Product.countDocuments({ stock: { $lt: 10, $gt: 0 } }),
-    Product.countDocuments({ stock: 0 }),
-    Product.countDocuments({ active: true }),
-    Order.countDocuments(),
-    Order.countDocuments({ status: 'WAITING_PAYMENT' }),
-    User.countDocuments(),
-  ]);
-
-  const recentOrders = await Order.find()
-    .sort({ createdAt: -1 })
-    .limit(5)
-    .populate('items.productId', 'name')
-    .lean();
-
-  res.json({
-    totalProducts,
-    lowStockCount: lowStock,
-    outOfStockCount: outOfStock,
-    activeProducts,
-    totalOrders,
-    pendingOrders,
-    totalUsers,
-    recentOrders: recentOrders.map(o => ({
-      id: o._id,
-      totalAmount: o.totalAmount,
-      status: o.status,
-      createdAt: o.createdAt,
-      items: o.items,
-      buyerInfo: o.buyerInfo
-    }))
-  });
 });

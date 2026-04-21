@@ -1,43 +1,104 @@
 // routes/auth.routes.js
-// Rutas para la autenticación de usuarios (registro y login)
 
 import express from 'express';
-// Importamos solo lo necesario para validar y el controlador
-import { body } from 'express-validator'; 
-import { loginUser, registerUser, getUserProfile } from '../controllers/auth.controller.js';
-import validate from '../middleware/validation.middleware.js'; 
+import { body } from 'express-validator';
+
+import {
+    loginUser,
+    registerUser,
+    getUserProfile
+} from '../controllers/auth.controller.js';
+
+import validate from '../middleware/validation.middleware.js';
 import { protect } from '../middleware/auth.middleware.js';
 import User from '../models/user.js';
-// CORRECCIÓN: Importar como named export
-import { generateToken } from '../utils/generateToken.js';
+
+import {
+    generateAccessToken,
+    generateRefreshToken,
+    verifyToken
+} from '../utils/generateToken.js';
 
 const router = express.Router();
 
-
-// Validaciones para el login y registro
+// ===============================
+// VALIDATIONS
+// ===============================
 const loginValidation = [
     body('email').isEmail().withMessage('El correo electrónico debe ser válido'),
     body('password').notEmpty().withMessage('La contraseña es obligatoria'),
 ];
 
-// --------------------------------------------------------------------------
-// 🔓 1. RUTAS PÚBLICAS
-// --------------------------------------------------------------------------
-
-// Ruta de Registro y Login (Usuario Estándar)
-router.route('/register').post(/* validaciones */ validate, registerUser);
+// ===============================
+// PUBLIC ROUTES
+// ===============================
+router.route('/register').post(validate, registerUser);
 router.route('/login').post(loginValidation, validate, loginUser);
 
-// --------------------------------------------------------------------------
-// 🔓 2. RUTA ESPECÍFICA PARA LOGIN DE ADMIN (NO DEBE LLEVAR MIDDLEWARE DE PROTECCIÓN)
-// --------------------------------------------------------------------------
+// ===============================
+// REFRESH TOKEN
+// ===============================
+router.post('/refresh', async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+
+        if (!refreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: 'Refresh token requerido',
+            });
+        }
+
+        const decoded = verifyToken(refreshToken, true);
+
+        if (!decoded) {
+            return res.status(401).json({
+                success: false,
+                message: 'Refresh token inválido o expirado',
+            });
+        }
+
+        const user = await User.findById(decoded.userId);
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Usuario no encontrado',
+            });
+        }
+
+        const newAccessToken = generateAccessToken(
+            user._id,
+            user.email,
+            user.role
+        );
+
+        return res.json({
+            success: true,
+            data: {
+                accessToken: newAccessToken,
+            },
+        });
+
+    } catch (error) {
+        console.error('❌ Error en refresh:', error);
+
+        return res.status(401).json({
+            success: false,
+            message: 'No se pudo refrescar la sesión',
+        });
+    }
+});
+
+// ===============================
+// ADMIN LOGIN (CORREGIDO)
+// ===============================
 router.route('/admin/login').post(loginValidation, validate, async (req, res) => {
     try {
         const { email, password } = req.body;
 
         const user = await User.findOne({ email }).select('+password');
 
-        // 1. Fallo si no existe o la contraseña no coincide
         if (!user || !(await user.matchPassword(password))) {
             return res.status(401).json({
                 success: false,
@@ -45,7 +106,6 @@ router.route('/admin/login').post(loginValidation, validate, async (req, res) =>
             });
         }
 
-        // 2. Fallo si no es administrador
         if (user.role !== 'admin') {
             return res.status(403).json({
                 success: false,
@@ -53,8 +113,14 @@ router.route('/admin/login').post(loginValidation, validate, async (req, res) =>
             });
         }
 
-        // 3. Éxito: Generar Token y devolver datos del admin
-        const token = generateToken(user._id, user.email, user.role);
+        const accessToken = generateAccessToken(
+            user._id,
+            user.email,
+            user.role
+        );
+
+        const refreshToken = generateRefreshToken(user._id);
+
         res.json({
             success: true,
             data: {
@@ -62,7 +128,8 @@ router.route('/admin/login').post(loginValidation, validate, async (req, res) =>
                 name: user.username,
                 email: user.email,
                 role: user.role,
-                token: token
+                accessToken,
+                refreshToken,
             },
             message: 'Login de administrador exitoso'
         });
@@ -76,11 +143,9 @@ router.route('/admin/login').post(loginValidation, validate, async (req, res) =>
     }
 });
 
-// --------------------------------------------------------------------------
-// 🔒 3. RUTAS PROTEGIDAS
-// --------------------------------------------------------------------------
-
-// Obtener perfil del usuario logueado
+// ===============================
+// PROTECTED ROUTES
+// ===============================
 router.route('/me').get(protect, getUserProfile);
 
 export default router;

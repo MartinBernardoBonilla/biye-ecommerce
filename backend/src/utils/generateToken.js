@@ -7,7 +7,10 @@ import jwt from 'jsonwebtoken';
  * @param {string} role - Rol del usuario (admin, user, etc.)
  * @returns {string} - Token JWT
  */
-export const generateToken = (userId, email, role = 'user') => {
+// ===============================
+// ACCESS TOKEN (tu actual)
+// ===============================
+export const generateAccessToken = (userId, email, role = 'user') => {
   const payload = {
     userId,
     email,
@@ -17,23 +20,46 @@ export const generateToken = (userId, email, role = 'user') => {
 
   return jwt.sign(
     payload,
-    process.env.JWT_SECRET || 'fallback_secret_key',
+    process.env.JWT_SECRET,
     {
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+      expiresIn: '15m', // 🔥 antes 7d → ahora corto
     }
   );
 };
+
+// ===============================
+// REFRESH TOKEN (nuevo)
+// ===============================
+export const generateRefreshToken = (userId) => {
+  return jwt.sign(
+    { userId },
+    process.env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: '7d',
+    }
+  );
+};
+
+// ===============================
+// COMPATIBILIDAD (IMPORTANTE)
+// ===============================
+export const generateToken = generateAccessToken;
 
 /**
  * Verifica y decodifica un token JWT
  * @param {string} token - Token JWT a verificar
  * @returns {object|null} - Payload decodificado o null si es inválido
  */
-export const verifyToken = (token) => {
+// ===============================
+// VERIFY
+// ===============================
+export const verifyToken = (token, isRefresh = false) => {
   try {
     return jwt.verify(
       token,
-      process.env.JWT_SECRET || 'fallback_secret_key'
+      isRefresh
+        ? process.env.JWT_REFRESH_SECRET
+        : process.env.JWT_SECRET
     );
   } catch (error) {
     console.error('Error verifying token:', error.message);
@@ -41,4 +67,8 @@ export const verifyToken = (token) => {
   }
 };
 
-export default { generateToken, verifyToken };
+export default {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyToken,
+};
