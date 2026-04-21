@@ -39,6 +39,24 @@ class AuthStorage {
         '✅ [AUTH] Token guardado correctamente: ${saved != null ? saved.substring(0, 15) : 'null'}...');
   }
 
+  static Future<void> saveRefreshToken(String token) async {
+    if (_isWeb) {
+      final prefs = await _getPrefs();
+      await prefs.setString(_refreshTokenKey, token);
+    } else {
+      await _secureStorage.write(key: _refreshTokenKey, value: token);
+    }
+  }
+
+  static Future<String?> getRefreshToken() async {
+    if (_isWeb) {
+      final prefs = await _getPrefs();
+      return prefs.getString(_refreshTokenKey);
+    } else {
+      return await _secureStorage.read(key: _refreshTokenKey);
+    }
+  }
+
   // Obtener token
   static Future<String?> getToken() async {
     String? token;

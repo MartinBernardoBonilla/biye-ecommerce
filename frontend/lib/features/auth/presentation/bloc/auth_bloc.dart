@@ -174,6 +174,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // ✅ TERCERO: Guardar token del backend
       await AuthStorage.saveToken(backendToken);
+      await AuthStorage.saveRefreshToken(data['refreshToken']);
       await AuthStorage.saveUserData(
         userId: userId,
         email: event.email,

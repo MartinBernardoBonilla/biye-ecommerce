@@ -1,56 +1,60 @@
 // lib/core/network/api_client.dart
 
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 import '../constants/app_constants.dart';
 import '../utils/auth_storage.dart';
 
+import 'package:biye/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:biye/features/auth/presentation/bloc/auth_event.dart';
+
 class ApiClient {
   final http.Client _client = http.Client();
   final String _baseUrl = AppConstants.apiBaseUrl;
+
   String? _token;
+  AuthBloc? authBloc;
 
-  ApiClient() {
-    _loadToken();
-  }
+  // 🔥 CONTROL DE REFRESH
+  bool _isRefreshing = false;
+  Completer<void>? _refreshCompleter;
 
   // ======================
-  // TOKEN MANAGEMENT
+  // TOKEN
   // ======================
 
-  Future<void> _loadToken() async {
-    _token = await AuthStorage.getToken();
-    if (_token != null) {
-      debugPrint('🟢 API CLIENT → Token cargado de storage');
-    }
-  }
-
-  Future<void> setToken(String token) async {
+  Future<void> setToken(String? token) async {
     _token = token;
-    await AuthStorage.saveToken(token);
-    debugPrint('🟢 API CLIENT → Token seteado en memoria y storage');
+
+    if (token != null) {
+      await AuthStorage.saveToken(token);
+    } else {
+      await AuthStorage.deleteToken();
+    }
   }
 
   Future<void> clearToken() async {
     _token = null;
     await AuthStorage.deleteToken();
-    debugPrint('🟡 API CLIENT → Token limpiado');
   }
 
-  Future<Map<String, String>> _getHeaders() async {
-    await _loadToken();
+  // ======================
+  // HEADERS
+  // ======================
 
+  Future<Map<String, String>> _getHeaders() async {
     final headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
-    if (_token != null && _token!.isNotEmpty) {
+    _token ??= await AuthStorage.getToken();
+
+    if (_token != null) {
       headers['Authorization'] = 'Bearer $_token';
-    } else {
-      debugPrint('🔴 API CLIENT → NO HAY TOKEN');
     }
 
     return headers;
@@ -61,103 +65,118 @@ class ApiClient {
   // ======================
 
   Future<Map<String, dynamic>> get(String path) async {
-    final uri = Uri.parse('$_baseUrl/$path');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('🌐 GET $uri');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-    final headers = await _getHeaders();
-    final response = await _client.get(uri, headers: headers);
-
-    return _handleResponse(response, path);
+    return _request(() => _client.get(
+          Uri.parse('$_baseUrl/$path'),
+          headers: await _getHeaders(),
+        ));
   }
 
   Future<Map<String, dynamic>> post(
     String path,
     Map<String, dynamic> body,
   ) async {
-    final uri = Uri.parse('$_baseUrl/$path');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('🌐 POST $uri');
-    debugPrint('📦 BODY: ${jsonEncode(body)}');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-    final headers = await _getHeaders();
-    final response = await _client.post(
-      uri,
-      headers: headers,
-      body: jsonEncode(body),
-    );
-
-    return _handleResponse(response, path);
+    return _request(() => _client.post(
+          Uri.parse('$_baseUrl/$path'),
+          headers: await _getHeaders(),
+          body: jsonEncode(body),
+        ));
   }
 
-  Future<Map<String, dynamic>> put(
-    String path,
-    Map<String, dynamic> body,
+  Future<Map<String, dynamic>> _request(
+    Future<http.Response> Function() requestFn,
   ) async {
-    final uri = Uri.parse('$_baseUrl/$path');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('🌐 PUT $uri');
-    debugPrint('📦 BODY: ${jsonEncode(body)}');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    final response = await requestFn();
 
-    final headers = await _getHeaders();
-    final response = await _client.put(
-      uri,
-      headers: headers,
-      body: jsonEncode(body),
-    );
-
-    return _handleResponse(response, path);
-  }
-
-  Future<Map<String, dynamic>> delete(String path) async {
-    final uri = Uri.parse('$_baseUrl/$path');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('🌐 DELETE $uri');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-    final headers = await _getHeaders();
-    final response = await _client.delete(uri, headers: headers);
-
-    return _handleResponse(response, path);
-  }
-
-  // ======================
-  // RESPONSE HANDLER
-  // ======================
-
-  Map<String, dynamic> _handleResponse(http.Response response, String path) {
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('📥 RESPONSE for: $path');
-    debugPrint('📊 Status: ${response.statusCode}');
-
-    final data = jsonDecode(response.body);
-    debugPrint('📦 DATA: ${_prettyPrint(data)}');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
+    // ✅ OK
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      return data;
-    } else {
-      final errorMsg = data['message'] ?? 'Error inesperado';
-      debugPrint('❌ ERROR: $errorMsg');
-      throw Exception(errorMsg);
+      return jsonDecode(response.body);
+    }
+
+    // 🔒 401 → intentar refresh
+    if (response.statusCode == 401) {
+      debugPrint('🔒 401 detectado → intentando refresh');
+
+      final refreshed = await _handleRefreshToken();
+
+      if (refreshed) {
+        debugPrint('🔁 Reintentando request...');
+        final retryResponse = await requestFn();
+
+        if (retryResponse.statusCode >= 200 &&
+            retryResponse.statusCode < 300) {
+          return jsonDecode(retryResponse.body);
+        }
+      }
+
+      // ❌ FALLÓ REFRESH → LOGOUT
+      debugPrint('❌ Refresh falló → logout');
+
+      await AuthStorage.clearAll();
+      authBloc?.add(AuthLogoutRequested());
+
+      throw Exception('SESSION_EXPIRED');
+    }
+
+    // ❌ ERROR NORMAL
+    final data = jsonDecode(response.body);
+    final errorMsg = data['message'] ?? 'Error inesperado';
+
+    throw Exception(errorMsg);
+  }
+
+  // ======================
+  // 🔥 REFRESH TOKEN LOGIC
+  // ======================
+
+  Future<bool> _handleRefreshToken() async {
+    // 🧠 Si ya se está refrescando → esperar
+    if (_isRefreshing) {
+      debugPrint('⏳ Esperando refresh en progreso...');
+      await _refreshCompleter?.future;
+      return _token != null;
+    }
+
+    _isRefreshing = true;
+    _refreshCompleter = Completer();
+
+    try {
+      final refreshToken = await AuthStorage.getRefreshToken();
+
+      if (refreshToken == null) {
+        debugPrint('❌ No hay refresh token');
+        return false;
+      }
+
+      final response = await _client.post(
+        Uri.parse('$_baseUrl/auth/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refreshToken': refreshToken}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        final newToken = data['data']['accessToken'];
+
+        if (newToken == null) return false;
+
+        await setToken(newToken);
+
+        debugPrint('✅ Token refrescado correctamente');
+
+        _refreshCompleter?.complete();
+
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('❌ Error en refresh: $e');
+      return false;
+    } finally {
+      _isRefreshing = false;
     }
   }
-
-  // ======================
-  // HELPER: Pretty Print JSON
-  // ======================
-
-  String _prettyPrint(Map<String, dynamic> json) {
-    const encoder = JsonEncoder.withIndent('  ');
-    return encoder.convert(json);
-  }
-
-  // ======================
-  // CLEANUP
-  // ======================
 
   void dispose() {
     _client.close();
