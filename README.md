@@ -68,67 +68,75 @@ Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR pres
 
 ### 1. Clonar el repositorio
 
-```bash
+` ` `bash
 git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
 cd biye-ecommerce
-```
+` ` `
 
+### 2. Backend
 
-## 📦 Cómo Ejecutar Localmente
-
-### 1. Clonar el repositorio
-
-```bash
-git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
-cd biye-ecommerce
-2. Backend
-bash
+` ` `bash
 cd backend
 npm install
 cp .env.example .env
 npm run dev
-3. Frontend
-bash
+` ` `
+
+### 3. Frontend
+
+` ` `bash
 cd frontend
 flutter pub get
 flutter run
-🔐 Variables de Entorno (Backend)
-env
+` ` `
+
+---
+
+## 🔐 Variables de Entorno (Backend)
+
+` ` `env
 PORT=5000
 MONGODB_URI=tu_url_de_mongodb
 MERCADOPAGO_ACCESS_TOKEN=APP_USR-tu_token
 NGROK_BASE_URL=https://tu-ngrok.ngrok-free.dev
 JWT_SECRET=tu_clave_secreta
-💳 Tarjetas de Prueba (Sandbox Mercado Pago)
-Marca	Número	CVV	Vencimiento
-Visa	4509 9535 6623 3704	123	11/25
-Mastercard	5031 7557 3453 0604	123	11/25
-🗺️ Roadmap
-Sistema de pagos completo (QR + Tarjeta)
+` ` `
 
-Webhook + Polling + Idempotencia
+---
 
-Dashboard administrativo
+## 💳 Tarjetas de Prueba (Sandbox Mercado Pago)
 
-Notificaciones por email
+| Marca | Número | CVV | Vencimiento |
+|-------|--------|-----|-------------|
+| Visa | 4509 9535 6623 3704 | 123 | 11/25 |
+| Mastercard | 5031 7557 3453 0604 | 123 | 11/25 |
 
-Sistema de cupones y descuentos
+---
 
-Soporte multi-negocio / Multi-tenant
+## 🗺️ Roadmap
 
-👤 Autor
-Martín Bernardo Bonilla — Fullstack Developer especializado en Flutter y Node.js
+- [x] Sistema de pagos completo (QR + Tarjeta)
+- [x] Webhook + Polling + Idempotencia
+- [ ] Dashboard administrativo
+- [ ] Notificaciones por email
+- [ ] Sistema de cupones y descuentos
+- [ ] Soporte multi-negocio / Multi-tenant
 
-https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
-https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white
-https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white
+---
 
-📄 Licencia
+## 👤 Autor
+
+**Martín Bernardo Bonilla** — Fullstack Developer especializado en Flutter y Node.js
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/martinbernardobonilla)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MartinBernardoBonilla)
+[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:martinbernardobonilla@gmail.com)
+
+---
+
+## 📄 Licencia
+
 MIT © 2026 Martín Bernardo Bonilla
-
-https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
-https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white
-https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white
 
 📄 Licencia
 MIT © 2026 Martín Bernardo Bonilla
