@@ -136,7 +136,8 @@ JWT_SECRET=tu_clave_secreta
 
 ## 📄 Licencia
 
-MIT © 2026 Martín Bernardo Bonilla
+[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+MIT © 2026 Martín Bernardo Bonilla
 📄 Licencia
 MIT © 2026 Martín Bernardo Bonilla
