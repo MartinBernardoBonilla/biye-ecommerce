@@ -1,9 +1,9 @@
 # Biye — Plataforma de E-commerce Fullstack
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?style=flat&logo=flutter&logoColor=white)](https://flutter.dev)
-[![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org)
-[![MongoDB](https://img.shields.io/badge/MongoDB-8.0-47A248?style=flat&logo=mongodb&logoColor=white)](https://mongodb.com)
-[![Mercado Pago](https://img.shields.io/badge/Mercado_Pago-009EE3?style=flat&logo=mercadopago&logoColor=white)](https://mercadopago.com)
+[![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-8.0-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![Mercado Pago](https://img.shields.io/badge/Mercado_Pago-009EE3?style=for-the-badge&logo=mercadopago&logoColor=white)](https://mercadopago.com)
 
 Biye es una plataforma de e-commerce fullstack moderna y flexible, pensada para adaptarse fácilmente a distintos tipos de negocio.
 
@@ -20,22 +20,13 @@ Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR pres
 
 ---
 
-## Capturas de Pantalla
+## 📸 Capturas de Pantalla
 
 *(Próximamente)*
 
-<!-- 
-Aquí irán las capturas del flujo completo:
-- Pantalla de inicio y productos
-- Carrito de compras
-- Checkout con selección de dirección y método de pago
-- Pantalla de QR / Checkout Pro
-- Pantalla de pago exitoso
--->
-
 ---
 
-## Características Principales
+## 🚀 Características Principales
 
 - ✅ **Sistema de pagos completo con Mercado Pago**
   - QR para pago presencial
@@ -51,30 +42,32 @@ Aquí irán las capturas del flujo completo:
 
 ---
 
-## Tecnologías Utilizadas
+## 🛠️ Stack Tecnológico (con badges)
 
-**Frontend**  
-- Flutter + Dart  
-- BLoC + Hydrated BLoC (gestión de estado)  
-- `qr_flutter`, `url_launcher`
+### Frontend
+[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
 
-**Backend**  
-- Node.js + Express  
-- MongoDB + Mongoose  
-- Mercado Pago SDK oficial  
-- Redis (cache)  
-- JWT + Rate Limiting
+### Backend
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io)
 
-**DevOps**  
-- Docker + Docker Compose  
-- Railway + Vercel  
-- Ngrok (desarrollo)
+### Pagos
+[![Mercado Pago](https://img.shields.io/badge/Mercado_Pago-009EE3?style=for-the-badge&logo=mercadopago&logoColor=white)](https://mercadopago.com)
+
+### DevOps
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+[![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://railway.app)
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
 
 ---
 
-## Cómo Ejecutar Localmente
+## 📦 Cómo Ejecutar Localmente
 
 ### 1. Clonar el repositorio
+
 ```bash
 git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
 cd biye-ecommerce
