@@ -1,4 +1,13 @@
-# Biye — Plataforma de E-commerce Fullstack
+<div align="center">
+  
+# 🛒 **BIYE** <sub><sub>v1.0</sub></sub>
+
+### *Plataforma de E-commerce Fullstack* ⚡
+
+[![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+
+</div>
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
