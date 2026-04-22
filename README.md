@@ -74,6 +74,13 @@ cd biye-ecommerce
 ```
 
 
+## 📦 Cómo Ejecutar Localmente
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
+cd biye-ecommerce
 2. Backend
 bash
 cd backend
@@ -111,6 +118,13 @@ Soporte multi-negocio / Multi-tenant
 
 👤 Autor
 Martín Bernardo Bonilla — Fullstack Developer especializado en Flutter y Node.js
+
+https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
+https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white
+https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white
+
+📄 Licencia
+MIT © 2026 Martín Bernardo Bonilla
 
 https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
 https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white
