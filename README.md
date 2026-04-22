@@ -117,7 +117,7 @@ JWT_SECRET=tu_clave_secreta
 
 - [x] Sistema de pagos completo (QR + Tarjeta)
 - [x] Webhook + Polling + Idempotencia
-- [ ] Dashboard administrativo
+- [x] Dashboard administrativo
 - [ ] Notificaciones por email
 - [ ] Sistema de cupones y descuentos
 - [ ] Soporte multi-negocio / Multi-tenant
