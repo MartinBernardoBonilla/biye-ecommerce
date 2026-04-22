@@ -42,7 +42,7 @@ Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR pres
 
 ---
 
-## 🛠️ Stack Tecnológico (con badges)
+## 🛠️ Stack Tecnológico 
 
 ### Frontend
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
@@ -71,49 +71,50 @@ Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR pres
 ```bash
 git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
 cd biye-ecommerce
+```
 
-2. Backendbash
 
+2. Backend
+bash
 cd backend
 npm install
-cp .env.example .env          # Configura tus credenciales
+cp .env.example .env
 npm run dev
-
-3. Frontendbash
-
+3. Frontend
+bash
 cd frontend
 flutter pub get
 flutter run
-
-Variables de Entorno (Backend)env
-
+🔐 Variables de Entorno (Backend)
+env
 PORT=5000
-MONGODB_URI=...
-MERCADOPAGO_ACCESS_TOKEN=APP_USR-...
+MONGODB_URI=tu_url_de_mongodb
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-tu_token
 NGROK_BASE_URL=https://tu-ngrok.ngrok-free.dev
-JWT_SECRET=tu_secret_key
+JWT_SECRET=tu_clave_secreta
+💳 Tarjetas de Prueba (Sandbox Mercado Pago)
+Marca	Número	CVV	Vencimiento
+Visa	4509 9535 6623 3704	123	11/25
+Mastercard	5031 7557 3453 0604	123	11/25
+🗺️ Roadmap
+Sistema de pagos completo (QR + Tarjeta)
 
-Tarjetas de Prueba (Sandbox)Marca
-Número
-CVV
-Vencimiento
-Visa
-4509 9535 6623 3704
-123
-11/25
-Mastercard
-5031 7557 3453 0604
-123
-11/25
-
-RoadmapSistema de pagos completo (QR + Tarjeta)
 Webhook + Polling + Idempotencia
+
 Dashboard administrativo
+
 Notificaciones por email
+
 Sistema de cupones y descuentos
+
 Soporte multi-negocio / Multi-tenant
 
-AutorMartín Bernardo Bonilla
-Fullstack Developer especializado en Flutter y Node.jsLicencia
-MIT © 2026 Martín Bernardo Bonilla
+👤 Autor
+Martín Bernardo Bonilla — Fullstack Developer especializado en Flutter y Node.js
 
+https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
+https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white
+https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white
+
+📄 Licencia
+MIT © 2026 Martín Bernardo Bonilla
