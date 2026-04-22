@@ -22,7 +22,15 @@ Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR pres
 
 ## 📸 Capturas de Pantalla
 
-*(Próximamente)*
+<div align="center">
+  
+| Pantalla de Inicio | Sección / Favoritos |
+|:------------------:|:-------------------:|
+| ![Home](https://res.cloudinary.com/dwchpxcrv/image/upload/imagen1_qezswq.jpg) | ![Productos](https://res.cloudinary.com/dwchpxcrv/image/upload/imagen_u19ub1.jpg) |
+
+</div>
+
+> ⚡ Aplicación en funcionamiento - Vista de productos y navegación.
 
 ---
 
