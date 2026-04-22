@@ -31,7 +31,6 @@ Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR pres
 </div>
 
 > ⚡ Aplicación en funcionamiento - Vista de productos y navegación.
-
 ---
 
 ## 🚀 Características Principales
