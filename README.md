@@ -73,76 +73,182 @@ Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR pres
 
 [![Tests](https://img.shields.io/badge/tests-19_passing-brightgreen?style=for-the-badge)](https://github.com/MartinBernardoBonilla/biye-ecommerce/tree/main/frontend/test)
 
-El proyecto incluye **19 tests** que garantizan la estabilidad del sistema:
+El proyecto incluye **19 tests automatizados** que garantizan la estabilidad del sistema:
 
-| Tipo | Cantidad | Qué prueba |
-|------|----------|------------|
-| Unit tests | 17 | Cálculo de carrito, validación de email/teléfono, descuentos |
-| Widget tests | 2 | Renderizado básico de componentes |
+| Tipo         | Cantidad | Cobertura                                                             |
+|--------------|----------|----------------------------------------------------------------------|
+| Unit tests   | 17       | Lógica de negocio: carrito, validaciones (email/teléfono), descuentos |
+| Widget tests | 2        | Renderizado y comportamiento básico de componentes en Flutter        |
 
-Para correr los tests:
+### ▶️ Ejecutar tests
 
 ```bash
 cd frontend
 flutter test
 ```
-```
-📦 Cómo Ejecutar Localmente
-```
-1. Clonar el repositorio
-```
-bash
+
+---
+
+## 🎥 Demo
+
+> ⚠️ Reemplazar con tu demo real
+
+- 📱 GIF del flujo de compra
+- 💳 Pago con QR (MercadoPago)
+- 📦 Confirmación de orden en tiempo real
+
+---
+
+## 📦 Cómo ejecutar el proyecto localmente
+
+### 1. Clonar el repositorio
+
+```bash
 git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
 cd biye-ecommerce
 ```
-2. Configuración del Backend0
-```
-bash
+
+---
+
+### 2. Configuración del Backend
+
+```bash
 cd backend
 npm install
 cp .env.example .env
-# Edita el archivo .env con tus credenciales
-npm run dev
 ```
-3. Configuración del Frontend
-```
-bash
-cd frontend
-flutter pub get
-flutter run
-```
-🔐 Variables de Entorno (Backend)
-```
-env
+
+Editar el archivo `.env`:
+
+```env
 PORT=5000
 MONGODB_URI=tu_url_de_mongodb
 MERCADOPAGO_ACCESS_TOKEN=APP_USR-tu_token
 NGROK_BASE_URL=https://tu-ngrok.ngrok-free.dev
 JWT_SECRET=tu_clave_secreta
 ```
-🗺️ Roadmap
-Sistema de pagos completo (QR + Tarjeta)
 
-Webhook + Polling + Idempotencia
+Iniciar servidor:
 
-Dashboard administrativo
+```bash
+npm run dev
+```
 
-Notificaciones por email
+---
 
-Sistema de cupones y descuentos
+### 3. Configuración del Frontend
 
-Soporte multi-negocio / Multi-tenant
+```bash
+cd frontend
+flutter pub get
+flutter run
+```
 
-📫 Contacto
-https://img.shields.io/badge/LinkedIn-Mart%C3%ADn_Bonilla-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
-https://img.shields.io/badge/GitHub-MartinBernardoBonilla-181717?style=for-the-badge&logo=github&logoColor=white
-https://img.shields.io/badge/Email-martinbernardobonilla%2540gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white
-https://img.shields.io/badge/Portfolio-WoodStack-646CFF?style=for-the-badge&logo=vite&logoColor=white
+---
 
-📌 Disponibilidad: 100% remoto · Primera experiencia laboral o proyectos freelance
+## 🏗️ Arquitectura
 
-👤 Autor
-Martín Bernardo Bonilla — Fullstack Developer
+```text
+Flutter App (Frontend)
+        │
+        ▼
+Node.js Backend (API REST)
+        │
+        ├── MongoDB (Órdenes / Usuarios / Pagos)
+        │
+        ├── MercadoPago API
+        │       │
+        │       └── Webhooks (notificación de pagos)
+        │
+        └── Polling Service (reconciliación de estados)
+```
 
-📄 Licencia
+---
+
+## 🧠 Decisiones Técnicas Clave
+
+### 💳 Manejo de pagos (problema real)
+
+El sistema está diseñado para manejar **inconsistencias entre estados de pago** (`pending`, `paid`, `failed`) debido a la naturaleza distribuida de MercadoPago.
+
+---
+
+### ⚙️ Estrategia implementada
+
+#### 1. Webhooks (fuente principal)
+- MercadoPago notifica eventos de pago
+- Backend actualiza el estado de la orden
+
+#### 2. Polling (fallback)
+- El frontend consulta el estado periódicamente
+- Si el estado permanece en `pending`, el backend consulta a MercadoPago
+- Se corrigen inconsistencias automáticamente
+
+#### 3. Idempotencia
+- Se evita duplicación de eventos usando `payment_id` como clave única
+- Webhooks duplicados no afectan el estado
+
+#### 4. Consistencia eventual
+- La base de datos refleja el estado final con retraso controlado
+- La **fuente de verdad es MercadoPago**, no la DB
+
+---
+
+### 🧩 Resolución de conflictos
+
+Se define una jerarquía de estados:
+
+```
+pending < processing < paid < failed
+```
+
+Siempre prevalece el estado más avanzado reportado por el proveedor de pagos.
+
+---
+
+### 🚨 Problemas reales que resuelve
+
+- Webhooks que fallan o llegan tarde  
+- Pagos confirmados pero no reflejados en la app  
+- Duplicación de eventos  
+- Usuarios que cierran la app antes de confirmación  
+
+---
+
+## 🗺️ Roadmap
+
+- ✅ Sistema de pagos (QR + Tarjeta)
+- ✅ Webhook + Polling + Idempotencia
+- 🔜 Dashboard administrativo
+- 🔜 Notificaciones por email
+- 🔜 Sistema de cupones y descuentos
+- 🔜 Soporte multi-negocio (multi-tenant)
+
+---
+
+## 📫 Contacto
+
+- 💼 LinkedIn: https://www.linkedin.com/in/tu-perfil
+- 💻 GitHub: https://github.com/MartinBernardoBonilla
+- 📧 Email: martinbernardobonilla@gmail.com
+- 🌐 Portfolio: WoodStack
+
+---
+
+## 📌 Disponibilidad
+
+🟢 100% remoto  
+🟢 Primera experiencia laboral o proyectos freelance  
+
+---
+
+## 👤 Autor
+
+**Martín Bernardo Bonilla**  
+Fullstack Developer  
+
+---
+
+## 📄 Licencia
+
 MIT © 2026 Martín Bernardo Bonilla
