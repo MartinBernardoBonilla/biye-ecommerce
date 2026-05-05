@@ -81,48 +81,65 @@ El proyecto incluye **19 tests** que garantizan la estabilidad del sistema:
 | Widget tests | 2 | Renderizado básico de componentes |
 
 Para correr los tests:
+
 ```bash
 cd frontend
 flutter test
-````
-
-## 📦 Cómo Ejecutar Localmente
-````
+```
+```
+📦 Cómo Ejecutar Localmente
+```
 1. Clonar el repositorio
-Bash
-git clone [https://github.com/MartinBernardoBonilla/biye-ecommerce.git](https://github.com/MartinBernardoBonilla/biye-ecommerce.git)
+```
+bash
+git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
 cd biye-ecommerce
-2. Configuración del Backend
-Bash
+```
+2. Configuración del Backend0
+```
+bash
 cd backend
 npm install
 cp .env.example .env
 # Edita el archivo .env con tus credenciales
 npm run dev
+```
 3. Configuración del Frontend
-Bash
+```
+bash
 cd frontend
 flutter pub get
 flutter run
-🔐 Variables de Envío (Backend)
-Fragmento de código
+```
+🔐 Variables de Entorno (Backend)
+```
+env
 PORT=5000
 MONGODB_URI=tu_url_de_mongodb
 MERCADOPAGO_ACCESS_TOKEN=APP_USR-tu_token
-NGROK_BASE_URL=[https://tu-ngrok.ngrok-free.dev](https://tu-ngrok.ngrok-free.dev)
+NGROK_BASE_URL=https://tu-ngrok.ngrok-free.dev
 JWT_SECRET=tu_clave_secreta
+```
 🗺️ Roadmap
-[x] Sistema de pagos completo (QR + Tarjeta)
+Sistema de pagos completo (QR + Tarjeta)
 
-[x] Webhook + Polling + Idempotencia
+Webhook + Polling + Idempotencia
 
-[x] Dashboard administrativo
+Dashboard administrativo
 
-[ ] Notificaciones por email
+Notificaciones por email
 
-[ ] Sistema de cupones y descuentos
+Sistema de cupones y descuentos
 
-[ ] Soporte multi-negocio / Multi-tenant
+Soporte multi-negocio / Multi-tenant
+
+📫 Contacto
+https://img.shields.io/badge/LinkedIn-Mart%C3%ADn_Bonilla-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
+https://img.shields.io/badge/GitHub-MartinBernardoBonilla-181717?style=for-the-badge&logo=github&logoColor=white
+https://img.shields.io/badge/Email-martinbernardobonilla%2540gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white
+https://img.shields.io/badge/Portfolio-WoodStack-646CFF?style=for-the-badge&logo=vite&logoColor=white
+
+📌 Disponibilidad: 100% remoto · Primera experiencia laboral o proyectos freelance
 
 👤 Autor
 Martín Bernardo Bonilla — Fullstack Developer
