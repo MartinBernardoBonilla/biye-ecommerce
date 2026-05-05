@@ -80,6 +80,23 @@ Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR pres
 
 ## 📦 Cómo Ejecutar Localmente
 
+## 🧪 Tests
+
+[![Tests](https://img.shields.io/badge/tests-19_passing-brightgreen?style=for-the-badge)](https://github.com/MartinBernardoBonilla/biye-ecommerce/tree/main/frontend/test)
+
+El proyecto incluye **19 tests unitarios** que corren en menos de 6 segundos:
+
+| Tipo | Cantidad | Qué prueba |
+|------|----------|------------|
+| Unit tests | 17 | Cálculo de carrito, validación de email/teléfono, descuentos |
+| Widget tests | 2 | Renderizado básico de componentes |
+
+### Correr los tests
+
+```bash
+cd frontend
+flutter test
+
 ### 1. Clonar el repositorio
 
 ` ` `bash
