@@ -84,7 +84,10 @@ Para correr los tests:
 ```bash
 cd frontend
 flutter test
-📦 Cómo Ejecutar Localmente
+````
+
+## 📦 Cómo Ejecutar Localmente
+````
 1. Clonar el repositorio
 Bash
 git clone [https://github.com/MartinBernardoBonilla/biye-ecommerce.git](https://github.com/MartinBernardoBonilla/biye-ecommerce.git)
