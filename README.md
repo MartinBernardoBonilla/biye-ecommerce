@@ -1,16 +1,23 @@
-# Biye — Plataforma de E-commerce Fullstack
+<div align="center">
+  
+# 🛒 **BIYE** <sub><sub>v1.0</sub></sub>
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?style=flat&logo=flutter&logoColor=white)](https://flutter.dev)
-[![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org)
-[![MongoDB](https://img.shields.io/badge/MongoDB-8.0-47A248?style=flat&logo=mongodb&logoColor=white)](https://mongodb.com)
-[![Mercado Pago](https://img.shields.io/badge/Mercado_Pago-009EE3?style=flat&logo=mercadopago&logoColor=white)](https://mercadopago.com)
+### *Plataforma de E-commerce Fullstack* ⚡
+
+[![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-8.0-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![Mercado Pago](https://img.shields.io/badge/Mercado_Pago-009EE3?style=for-the-badge&logo=mercadopago&logoColor=white)](https://mercadopago.com)
+
+</div>
+
+---
 
 Biye es una plataforma de e-commerce fullstack moderna y flexible, pensada para adaptarse fácilmente a distintos tipos de negocio.
 
 Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR presencial como tarjetas online), incluyendo confirmación en tiempo real mediante webhooks y polling, y está construida sobre una arquitectura limpia y escalable, lista para personalizar y crecer.
 
 ---
-
 ## ✨ Demo en Vivo
 
 - **Frontend (Web)**: [Ver Demo](https://biye-app.vercel.app)
@@ -20,22 +27,20 @@ Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR pres
 
 ---
 
-## Capturas de Pantalla
+## 📸 Capturas de Pantalla
 
-*(Próximamente)*
+<div align="center">
+  
+| Pantalla de Inicio | Sección / Favoritos |
+|:------------------:|:-------------------:|
+| ![Home](https://res.cloudinary.com/dwchpxcrv/image/upload/imagen1_qezswq.jpg) | ![Productos](https://res.cloudinary.com/dwchpxcrv/image/upload/imagen_u19ub1.jpg) |
 
-<!-- 
-Aquí irán las capturas del flujo completo:
-- Pantalla de inicio y productos
-- Carrito de compras
-- Checkout con selección de dirección y método de pago
-- Pantalla de QR / Checkout Pro
-- Pantalla de pago exitoso
--->
+</div>
 
+> ⚡ Aplicación en funcionamiento - Vista de productos y navegación.
 ---
 
-## Características Principales
+## 🚀 Características Principales
 
 - ✅ **Sistema de pagos completo con Mercado Pago**
   - QR para pago presencial
@@ -51,76 +56,100 @@ Aquí irán las capturas del flujo completo:
 
 ---
 
-## Tecnologías Utilizadas
+## 🛠️ Stack Tecnológico 
 
-**Frontend**  
-- Flutter + Dart  
-- BLoC + Hydrated BLoC (gestión de estado)  
-- `qr_flutter`, `url_launcher`
+### Frontend
+[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
 
-**Backend**  
-- Node.js + Express  
-- MongoDB + Mongoose  
-- Mercado Pago SDK oficial  
-- Redis (cache)  
-- JWT + Rate Limiting
+### Backend
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io)
 
-**DevOps**  
-- Docker + Docker Compose  
-- Railway + Vercel  
-- Ngrok (desarrollo)
+### Pagos
+[![Mercado Pago](https://img.shields.io/badge/Mercado_Pago-009EE3?style=for-the-badge&logo=mercadopago&logoColor=white)](https://mercadopago.com)
+
+### DevOps
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+[![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://railway.app)
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
 
 ---
 
-## Cómo Ejecutar Localmente
+## 📦 Cómo Ejecutar Localmente
 
 ### 1. Clonar el repositorio
-```bash
+
+` ` `bash
 git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
 cd biye-ecommerce
+` ` `
 
-2. Backendbash
+### 2. Backend
 
+` ` `bash
 cd backend
 npm install
-cp .env.example .env          # Configura tus credenciales
+cp .env.example .env
 npm run dev
+` ` `
 
-3. Frontendbash
+### 3. Frontend
 
+` ` `bash
 cd frontend
 flutter pub get
 flutter run
+` ` `
 
-Variables de Entorno (Backend)env
+---
 
+## 🔐 Variables de Entorno (Backend)
+
+` ` `env
 PORT=5000
-MONGODB_URI=...
-MERCADOPAGO_ACCESS_TOKEN=APP_USR-...
+MONGODB_URI=tu_url_de_mongodb
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-tu_token
 NGROK_BASE_URL=https://tu-ngrok.ngrok-free.dev
-JWT_SECRET=tu_secret_key
+JWT_SECRET=tu_clave_secreta
+` ` `
 
-Tarjetas de Prueba (Sandbox)Marca
-Número
-CVV
-Vencimiento
-Visa
-4509 9535 6623 3704
-123
-11/25
-Mastercard
-5031 7557 3453 0604
-123
-11/25
+---
 
-RoadmapSistema de pagos completo (QR + Tarjeta)
-Webhook + Polling + Idempotencia
-Dashboard administrativo
-Notificaciones por email
-Sistema de cupones y descuentos
-Soporte multi-negocio / Multi-tenant
+## 💳 Tarjetas de Prueba (Sandbox Mercado Pago)
 
-AutorMartín Bernardo Bonilla
-Fullstack Developer especializado en Flutter y Node.jsLicencia
+| Marca | Número | CVV | Vencimiento |
+|-------|--------|-----|-------------|
+| Visa | 4509 9535 6623 3704 | 123 | 11/25 |
+| Mastercard | 5031 7557 3453 0604 | 123 | 11/25 |
+
+---
+
+## 🗺️ Roadmap
+
+- [x] Sistema de pagos completo (QR + Tarjeta)
+- [x] Webhook + Polling + Idempotencia
+- [x] Dashboard administrativo
+- [ ] Notificaciones por email
+- [ ] Sistema de cupones y descuentos
+- [ ] Soporte multi-negocio / Multi-tenant
+
+---
+
+## 👤 Autor
+
+**Martín Bernardo Bonilla** — Fullstack Developer especializado en Flutter y Node.js
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/martinbernardobonilla)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MartinBernardoBonilla)
+[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:martinbernardobonilla@gmail.com)
+
+---
+
+## 📄 Licencia
+
+[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 MIT © 2026 Martín Bernardo Bonilla
-
