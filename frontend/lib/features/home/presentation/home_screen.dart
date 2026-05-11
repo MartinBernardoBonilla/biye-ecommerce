@@ -590,7 +590,7 @@ class _HomeScreenState extends State<HomeScreen>
             Container(
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/images/marmolamarillo.png'),
+                  image: AssetImage('assets/images/background_dark.jpeg'),
                   fit: BoxFit.cover,
                 ),
               ),
