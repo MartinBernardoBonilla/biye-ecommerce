@@ -588,9 +588,13 @@ class _HomeScreenState extends State<HomeScreen>
         body: Stack(
           children: [
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/images/background_dark.jpeg'),
+                  image: AssetImage(
+                    Theme.of(context).brightness == Brightness.dark
+                        ? 'assets/images/background_dark.jpeg'
+                        : 'assets/images/background_light.jpeg',
+                  ),
                   fit: BoxFit.cover,
                 ),
               ),
