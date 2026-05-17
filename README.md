@@ -112,6 +112,7 @@ flutter test
 **3. Pago con QR y confirmación**  
 ![Pago QR](pago-qr.gif)
 
+## 🚀 Cómo Instalar y Ejecutar
 
 ```bash
 git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
