@@ -13,8 +13,7 @@
 
 ---
 
-Biye es una plataforma de e-commerce fullstack moderna y flexible, pensada para adaptarse fácilmente a distintos tipos de negocio. 
-
+Biye es una plataforma de e-commerce fullstack moderna y flexible, con foco en robustez del sistema de pagos y arquitectura limpia.
 Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR presencial como tarjetas online), incluyendo confirmación en tiempo real mediante webhooks y polling, y está construida sobre una arquitectura limpia y escalable.
 
 ---
@@ -110,7 +109,7 @@ git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
 cd biye-ecommerce
 ```
 
-### 2. Configuración del Backend
+
 
 ### 2. Configuración del Backend
 
