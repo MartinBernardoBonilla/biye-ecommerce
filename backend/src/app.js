@@ -28,6 +28,7 @@ const corsOptions = {
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       'https://biye-app.vercel.app',
+      'https://biye-app-final.vercel.app',
       'https://biye-web.com',
       'http://localhost:42321',
       'http://localhost:3000',
