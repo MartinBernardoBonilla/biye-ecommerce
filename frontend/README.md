@@ -1,17 +1,32 @@
-# biye
+## 🚀 Instalación
 
-A new Flutter project.
+```bash
+flutter pub get
+flutter run
+```
 
-## Getting Started
+## 🧪 Tests
 
-This project is a starting point for a Flutter application.
+```bash
+flutter test
+```
 
-A few resources to get you started if this is your first Flutter project:
+17 unit tests + 2 widget tests.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## 🔗 Conexión con el backend
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+La URL base se configura en:
+`lib/core/constants/app_constants.dart`
+
+```dart
+static const String apiBaseUrl = 'https://tu-backend.railway.app/api/v1';
+```
+
+## 📦 Dependencias principales
+
+| Paquete | Uso |
+|---------|-----|
+| `flutter_bloc` | Manejo de estado |
+| `http` | Requests HTTP |
+| `shared_preferences` | Almacenamiento local |
+| `go_router` | Navegación |
