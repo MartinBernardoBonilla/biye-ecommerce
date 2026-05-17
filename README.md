@@ -91,12 +91,22 @@ flutter test
 
 ## 🎥 Demo
 
-> ⚠️ Reemplazar con tu demo real
+### 🎬 Demo del flujo de compra
 
-- 📱 GIF del flujo de compra
-- 💳 Pago con QR (MercadoPago)
-- 📦 Confirmación de orden en tiempo real
+**Video completo del proceso:**
 
+<video src="https://litter.catbox.moe/dxfira.mp4" width="820" controls autoplay loop muted></video>
+
+**Momentos clave:**
+
+**1. Agregar productos al carrito**  
+![Agregar al carrito](carrito.gif)
+
+**2. Checkout y resumen de compra**  
+![Checkout](checkout.gif)
+
+**3. Pago con QR y confirmación**  
+![Pago con QR](pago-qr.gif)
 ---
 
 ## 📦 Cómo ejecutar el proyecto localmente
