@@ -91,13 +91,7 @@ flutter test
 
 ### 🎬 Video completo del flujo de compra
 
-<video src="https://github.com/MartinBernardoBonilla/biye-ecommerce/raw/main/assets/output_final.mp4" 
-       width="100%" 
-       style="max-width: 900px; border-radius: 12px;" 
-       controls 
-       autoplay 
-       loop 
-       muted></video>
+[▶️ Ver video completo](https://github.com/MartinBernardoBonilla/biye-ecommerce/raw/main/assets/output_final.mp4)
 
 ### 📱 Flujos detallados
 
