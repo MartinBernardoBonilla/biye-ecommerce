@@ -91,20 +91,26 @@ flutter test
 
 ## 🎥 Demo
 
-**Video completo del funcionamiento de Biye E-commerce**
+### 🎬 Video completo del flujo de compra
 
-<video src="https://github.com/MartinBernardoBonilla/biye-ecommerce/raw/main/assets/output_final.mp4" width="100%" style="max-width: 820px;" controls autoplay loop muted></video>
+<video src="https://github.com/MartinBernardoBonilla/biye-ecommerce/raw/main/assets/output_final.mp4" 
+       width="100%" 
+       style="max-width: 900px; border-radius: 12px;" 
+       controls 
+       autoplay 
+       loop 
+       muted></video>
 
-### Flujos principales:
+### 📱 Flujos detallados
 
-**1. Agregar productos al carrito**
+**1. Agregar productos al carrito**  
 ![Agregar al carrito](carrito.gif)
 
-**2. Proceso de Checkout**
+**2. Checkout y resumen de compra**  
 ![Checkout](checkout.gif)
 
-**3. Pantalla de Pago con QR**
-![Pago con QR](pago-qr.gif)
+**3. Pago con QR y confirmación**  
+![Pago QR](pago-qr.gif)
 
 
 ```bash
