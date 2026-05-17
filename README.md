@@ -19,10 +19,8 @@ Cuenta con un sistema de pagos robusto integrado con Mercado Pago (tanto QR pres
 
 ---
 ## ✨ Demo en Vivo
-
-- **Frontend (Web)**: [Ver Demo](https://biye-app.vercel.app)
+- **Frontend (Web)**: [Ver Demo](https://biye-app-final.vercel.app)
 - **Backend API**: [https://biye-ecommerce-production.up.railway.app](https://biye-ecommerce-production.up.railway.app)
-
 > Proyecto desarrollado con enfoque en robustez de pagos y escalabilidad.
 
 ---
