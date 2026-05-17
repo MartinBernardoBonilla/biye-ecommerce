@@ -103,12 +103,14 @@ flutter test
 
 ## 🚀 Cómo Instalar y Ejecutar
 
+### 1. Clonar el repositorio
+
 ```bash
 git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
 cd biye-ecommerce
 ```
 
----
+### 2. Configuración del Backend
 
 ### 2. Configuración del Backend
 
