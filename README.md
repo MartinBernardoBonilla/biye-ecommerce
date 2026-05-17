@@ -237,7 +237,7 @@ Siempre prevalece el estado más avanzado reportado por el proveedor de pagos.
 
 ## 📫 Contacto
 
-- 💼 LinkedIn: https://www.linkedin.com/in/tu-perfil](https://www.linkedin.com/in/martinbernardobonilla/
+- 💼 LinkedIn: https://www.linkedin.com/in/martinbernardobonilla/
 - 💻 GitHub: https://github.com/MartinBernardoBonilla
 - 📧 Email: martinbernardobonilla@gmail.com
 - 🌐 Portfolio: WoodStack
