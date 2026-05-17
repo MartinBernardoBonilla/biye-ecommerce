@@ -102,13 +102,10 @@ flutter test
 ### 📱 Flujos detallados
 
 **1. Agregar productos al carrito**  
-![Agregar al carrito](carrito.gif)
+<img src="carrito.gif" width="280" />
 
 **2. Checkout y resumen de compra**  
-![Checkout](checkout.gif)
-
-**3. Pago con QR y confirmación**  
-![Pago QR](pago-qr.gif)
+<img src="checkout.gif" width="280" />
 
 ## 🚀 Cómo Instalar y Ejecutar
 
