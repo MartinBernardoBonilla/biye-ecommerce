@@ -9,8 +9,7 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-8.0-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
 [![Mercado Pago](https://img.shields.io/badge/Mercado_Pago-009EE3?style=for-the-badge&logo=mercadopago&logoColor=white)](https://mercadopago.com)
 
-
-**Resilient payment processing · Event-driven order reconciliation · Distributed state consistency**
+**Resilient Payment Processing · Event-Driven Reconciliation · Distributed State Consistency**
 
 </div>
 
@@ -18,85 +17,34 @@
 
 ## Overview
 
-**Biye** is a production-oriented fullstack mobile e-commerce platform built to explore real-world distributed payment challenges.
+**Biye** is a production-oriented fullstack mobile e-commerce platform designed to address real-world distributed payment consistency challenges.
 
-Beyond standard shopping features, the project focuses on **fault-tolerant checkout orchestration**, combining webhook-driven payment confirmation, polling-based reconciliation, idempotent order processing, and eventual consistency guarantees.
+The system focuses on fault-tolerant checkout orchestration by combining webhook-driven payment confirmation, polling-based reconciliation, idempotent transaction processing, and eventual consistency guarantees.
 
-The system was designed to address reliability issues commonly found in asynchronous payment workflows such as:
-
-- Delayed payment confirmations
-- Duplicate webhook notifications
-- Temporary provider inconsistencies
-- Interrupted client sessions during checkout
+It was built to solve reliability issues commonly found in asynchronous payment systems such as delayed confirmations, duplicated notifications, interrupted checkout flows, and state desynchronization between client and backend.
 
 ---
 
 ## Live Demo
 
-- **Frontend (Web):**  
-  https://biye-app-final.vercel.app
+- **Frontend (Web)**  
+https://biye-app-final.vercel.app
 
-- **Backend API:**  
-  https://biye-ecommerce-production.up.railway.app
+- **Backend API**  
+https://biye-ecommerce-production.up.railway.app
 
 ---
 
 ## Engineering Focus
 
-Biye explores core distributed systems concepts applied to e-commerce payment infrastructure:
+Biye explores distributed systems concepts applied to payment infrastructure:
 
-- **Event-driven payment confirmation**
-- **Fallback reconciliation strategies**
-- **Idempotent transaction processing**
-- **Eventual consistency**
-- **State conflict resolution**
-- **Fault-tolerant checkout flows**
-
----
-
-## Screenshots
-
-<div align="center">
-
-| Home | Products / Favorites |
-|:---:|:---:|
-| ![Home](https://res.cloudinary.com/dwchpxcrv/image/upload/imagen1_qezswq.jpg) | ![Products](https://res.cloudinary.com/dwchpxcrv/image/upload/imagen_u19ub1.jpg) |
-
-</div>
-
----
-
-## Core Features
-
-### Payment Infrastructure
-- Mercado Pago QR payments
-- Online card checkout
-- Webhook-first payment confirmation
-- Polling reconciliation fallback
-- Idempotent payment event processing
-- Sandbox and production support
-
-### Commerce Features
-- Product catalog
-- Shopping cart
-- Favorites
-- Checkout flow
-- Order management
-- Address management
-- Payment method selection
-
-### Security & Reliability
-- JWT authentication
-- Session persistence
-- Rate limiting
-- Defensive error handling
-- Robust async state synchronization
-
-### Frontend Architecture
-- Flutter + Dart
-- BLoC state management
-- Clean Architecture
-- Modular feature-based structure
+- Event-driven payment confirmation
+- Polling fallback reconciliation
+- Idempotent transaction processing
+- Eventual consistency
+- Deterministic conflict resolution
+- Fault-tolerant checkout recovery
 
 ---
 
@@ -115,10 +63,75 @@ Node.js / Express REST API
      │
      ├── Mercado Pago API
      │       │
-     │       └── Webhook Notifications
+     │       └── Webhook Events
      │
-     └── Polling Reconciliation Service
+     └── Polling Reconciliation Layer
 ```
+
+---
+
+## Screenshots
+
+<div align="center">
+
+| Home | Products / Favorites |
+|:---:|:---:|
+| ![Home](https://res.cloudinary.com/dwchpxcrv/image/upload/imagen1_qezswq.jpg) | ![Products](https://res.cloudinary.com/dwchpxcrv/image/upload/imagen_u19ub1.jpg) |
+
+</div>
+
+---
+
+## Demo Flows
+
+<div align="center">
+
+### Add to Cart
+<img src="./assets/carrito.gif" width="280"/>
+
+### Checkout Flow
+<img src="./assets/checkout.gif" width="280"/>
+
+### Payment Lifecycle
+<img src="./assets/output_final.gif" width="280"/>
+
+</div>
+
+Visual demonstrations of product selection, checkout orchestration, and asynchronous payment reconciliation.
+
+---
+
+## Core Features
+
+### Payment Infrastructure
+- Mercado Pago QR payments
+- Online card checkout
+- Webhook-first confirmation
+- Polling reconciliation fallback
+- Idempotent payment event processing
+- Sandbox & production support
+
+### Commerce Features
+- Product catalog
+- Shopping cart
+- Favorites
+- Checkout flow
+- Order lifecycle management
+- Address handling
+- Payment method selection
+
+### Security & Reliability
+- JWT authentication
+- Session persistence
+- Rate limiting
+- Defensive error handling
+- Async state synchronization
+
+### Frontend Architecture
+- Flutter + Dart
+- BLoC state management
+- Clean Architecture
+- Modular feature-based structure
 
 ---
 
@@ -126,9 +139,9 @@ Node.js / Express REST API
 
 ### 1. Webhook-First Confirmation
 
-Mercado Pago notifies payment events asynchronously.
+Mercado Pago sends asynchronous payment notifications.
 
-The backend processes incoming events and updates order state accordingly.
+The backend processes these events and updates order state.
 
 ---
 
@@ -136,9 +149,9 @@ The backend processes incoming events and updates order state accordingly.
 
 If webhook delivery is delayed or fails:
 
-- The client periodically requests payment status
-- The backend queries Mercado Pago directly
-- Order state is reconciled automatically
+- Client polls payment status
+- Backend queries Mercado Pago directly
+- State is reconciled automatically
 
 ---
 
@@ -146,7 +159,7 @@ If webhook delivery is delayed or fails:
 
 Duplicate payment notifications are safely ignored using unique payment identifiers.
 
-This guarantees that repeated provider events do not create duplicated order transitions.
+This prevents duplicated order transitions.
 
 ---
 
@@ -158,9 +171,9 @@ Database state converges toward provider-confirmed state through reconciliation.
 
 ---
 
-### 5. Conflict Resolution Strategy
+### 5. Conflict Resolution
 
-Order states follow deterministic precedence:
+Order state precedence:
 
 ```text
 pending < processing < paid < failed
@@ -172,13 +185,13 @@ The most advanced valid provider state always prevails.
 
 ## Technical Challenges Solved
 
-Biye addresses real-world payment edge cases such as:
+Biye handles real-world edge cases such as:
 
 - Delayed webhook delivery
-- Duplicate provider callbacks
-- Checkout interruption during payment confirmation
-- Pending states that require reconciliation
-- State desynchronization between frontend and backend
+- Duplicate callback events
+- Interrupted checkout sessions
+- Pending payment reconciliation
+- Frontend/backend state desynchronization
 
 ---
 
@@ -195,12 +208,12 @@ Biye addresses real-world payment edge cases such as:
 - MongoDB
 - Redis
 
-### Infrastructure / Deployment
+### Infrastructure
 - Docker
 - Railway
 - Vercel
 
-### Payment Provider
+### Payments
 - Mercado Pago API
 
 ---
@@ -209,27 +222,17 @@ Biye addresses real-world payment edge cases such as:
 
 [![Tests](https://img.shields.io/badge/tests-19_passing-brightgreen?style=for-the-badge)]()
 
-Biye includes automated validation across business logic and UI behavior.
-
 | Type | Count | Coverage |
 |------|------:|---------|
 | Unit Tests | 17 | Cart logic, validation, pricing rules |
-| Widget Tests | 2 | Core UI rendering and interactions |
+| Widget Tests | 2 | Core UI rendering |
 
-### Run Tests
+Run tests:
 
 ```bash
 cd frontend
 flutter test
 ```
-
----
-
-## Demo Video
-
-### Full Purchase Flow
-
-https://github.com/MartinBernardoBonilla/biye-ecommerce/raw/main/assets/output_final.mp4
 
 ---
 
@@ -241,8 +244,6 @@ https://github.com/MartinBernardoBonilla/biye-ecommerce/raw/main/assets/output_f
 git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
 cd biye-ecommerce
 ```
-
----
 
 ### Backend Setup
 
@@ -283,17 +284,17 @@ flutter run
 ## Roadmap
 
 ### Completed
-- Payment infrastructure
-- QR + Card checkout
+- QR + Card payments
 - Webhook reconciliation
 - Polling fallback
 - Idempotency safeguards
+- Distributed checkout consistency
 
 ### Planned
 - Admin dashboard
 - Email notifications
 - Coupon system
-- Multi-tenant business support
+- Multi-tenant support
 - Analytics dashboard
 
 ---
