@@ -87,10 +87,10 @@ Node.js / Express REST API
 <div align="center">
 
 ### Add to Cart
-<img src="./assets/carrito.gif" width="280"/>
+<img src="./assets/carrito_new.gif" width="280"/>
 
 ### Checkout Flow
-<img src="./assets/checkout.gif" width="280"/>
+<img src="./assets/checkout_new.gif" width="280"/>
 
 ### Payment Lifecycle
 <img src="./assets/output_final.gif" width="280"/>
