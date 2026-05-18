@@ -239,7 +239,7 @@ Siempre prevalece el estado más avanzado reportado por el proveedor de pagos.
 ## 📌 Disponibilidad
 
 🟢 100% remoto  
-🟢 Primera experiencia laboral o proyectos freelance  
+
 
 ---
 
