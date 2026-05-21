@@ -220,18 +220,26 @@ Biye handles real-world edge cases such as:
 
 ## Automated Testing
 
-[![Tests](https://img.shields.io/badge/tests-19_passing-brightgreen?style=for-the-badge)]()
+[![Tests](https://img.shields.io/badge/tests-35_passing-brightgreen?style=for-the-badge)]()
 
 | Type | Count | Coverage |
 |------|------:|---------|
-| Unit Tests | 17 | Cart logic, validation, pricing rules |
-| Widget Tests | 2 | Core UI rendering |
+| Unit Tests (Flutter) | 17 | Cart logic, validation, pricing rules |
+| Widget Tests (Flutter) | 9 | UI rendering, user interactions |
+| Integration Tests (Node.js) | 10 | Webhook idempotency, payment state transitions |
 
-Run tests:
+Run frontend tests:
 
 ```bash
 cd frontend
 flutter test
+```
+
+Run backend tests:
+
+```bash
+cd backend
+npm test
 ```
 
 ---
