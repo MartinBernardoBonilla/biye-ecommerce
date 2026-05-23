@@ -219,7 +219,6 @@ Biye handles real-world edge cases such as:
 ---
 
 ## Automated Testing
-
 [![Tests](https://img.shields.io/badge/tests-40_passing-brightgreen?style=for-the-badge)]()
 
 | Type | Count | Coverage |
@@ -228,17 +227,17 @@ Biye handles real-world edge cases such as:
 | Widget Tests (Flutter) | 9 | UI rendering, user interactions |
 | Integration Tests (Node.js) | 15 | Webhook idempotency, MP API failures (500), corrupt payloads (400), DB resilience, and state transitions |
 
-### Run Frontend Tests
+### Run Tests
 
 ```bash
+# Frontend
 cd frontend
 flutter test
-### Backend Setup
 
-```bash
+# Backend
 cd backend
-npm install
-cp .env.example .env
+npm run test
+` ` `  
 ```
 
 Configure:
