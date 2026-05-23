@@ -237,10 +237,21 @@ flutter test
 # Backend
 cd backend
 npm run test
-` ` `  
 ```
 
-Configure:
+---
+
+## Installation & Setup
+
+### Backend
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+```
+
+Configure your `.env`:
 
 ```env
 PORT=5000
@@ -250,15 +261,11 @@ NGROK_BASE_URL=your_ngrok_url
 JWT_SECRET=your_secret
 ```
 
-Run:
-
 ```bash
 npm run dev
 ```
 
----
-
-### Frontend Setup
+### Frontend
 
 ```bash
 cd frontend
