@@ -233,6 +233,9 @@ Run frontend tests:
 ```bash
 cd frontend
 flutter test
+cd backend
+npm test
+
 ---
 
 ## Installation
