@@ -7,10 +7,10 @@ const client = new MercadoPagoConfig({
 });
 
 // ✅ Set para idempotencia (en producción usa Redis)
-const processedPayments = new Set();
+export const processedPayments = new Set();
 
 // Limpiar payments procesados cada hora para evitar crecimiento infinito
-setInterval(() => {
+export const webhookCacheInterval = setInterval(() => {
   console.log(`🧹 Limpiando cache de webhooks. Tamaño actual: ${processedPayments.size}`);
   processedPayments.clear();
 }, 60 * 60 * 1000);
@@ -82,6 +82,9 @@ export const checkPaymentStatus = async (orderId) => {
 // WEBHOOK CON IDEMPOTENCIA
 // =======================
 export const processWebhook = async (req, res) => {
+  // Guardamos el paymentId acá arriba para poder usarlo en el bloque catch si hace falta limpiar
+  let currentPaymentId = null;
+
   try {
     console.log('🪝 Webhook recibido body:', JSON.stringify(req.body, null, 2));
     console.log('🪝 Webhook recibido query:', req.query);
@@ -98,6 +101,7 @@ export const processWebhook = async (req, res) => {
       return res.sendStatus(200);
     }
 
+    currentPaymentId = paymentId;
     console.log('📦 paymentId extraído:', paymentId);
 
     // ✅ IDEMPOTENCIA: Evitar procesar el mismo pago dos veces
@@ -106,22 +110,25 @@ export const processWebhook = async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // Marcar como procesado
+    // Marcar como procesado preventivamente
     processedPayments.add(paymentId);
     console.log(`🪝 Procesando webhook por primera vez: ${paymentId}`);
 
     const paymentClient = new Payment(client);
     const payment = await paymentClient.get({ id: String(paymentId) });
 
+    // ✅ Test 1.2: Validación estructural del payload devuelto por MP
+    if (!payment || !payment.status || !payment.external_reference) {
+      console.log('❌ Payload de Mercado Pago corrupto o inesperado');
+      // Si la respuesta de MP no tiene el formato, el Set no debería retenerlo eternamente
+      processedPayments.delete(paymentId);
+      return res.status(400).send('Bad Request: Invalid MP Payload');
+    }
+
     console.log('💰 Payment status:', payment.status);
     console.log('💰 external_reference:', payment.external_reference);
 
     const orderId = payment.external_reference || payment.metadata?.order_id;
-
-    if (!orderId) {
-      console.log('❌ No se pudo obtener orderId');
-      return res.sendStatus(200);
-    }
 
     const order = await Order.findById(orderId);
     if (!order) {
@@ -144,8 +151,17 @@ export const processWebhook = async (req, res) => {
 
     res.sendStatus(200);
   } catch (error) {
-    console.error('❌ Error en webhook:', error);
-    res.sendStatus(200); // Siempre responder 200 a MP
+    console.error('❌ Error crítico en webhook:', error.message);
+
+    // ✅ Test 3.2: Si la Base de Datos o MP fallaron, SACAMOS el ID del Set de idempotencia
+    // Esto asegura que cuando MP reintente el webhook, nuestro servidor lo vuelva a intentar.
+    if (currentPaymentId) {
+      processedPayments.delete(currentPaymentId);
+      console.log(`🗑️ Removido paymentId ${currentPaymentId} del Set debido a un error.`);
+    }
+
+    // ✅ Test 1.1: Responder 500 ante errores de infraestructura (caídas de DB o fallos de red con MP)
+    res.status(500).send('Internal Server Error');
   }
 };
 
