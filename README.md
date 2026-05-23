@@ -228,25 +228,11 @@ Biye handles real-world edge cases such as:
 | Widget Tests (Flutter) | 9 | UI rendering, user interactions |
 | Integration Tests (Node.js) | 15 | Webhook idempotency, MP API failures (500), corrupt payloads (400), DB resilience, and state transitions |
 
-Run frontend tests:
+### Run Frontend Tests
 
 ```bash
 cd frontend
 flutter test
-cd backend
-npm test
-
----
-
-## Installation
-
-### Clone Repository
-
-```bash
-git clone https://github.com/MartinBernardoBonilla/biye-ecommerce.git
-cd biye-ecommerce
-```
-
 ### Backend Setup
 
 ```bash
