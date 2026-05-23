@@ -285,7 +285,7 @@ flutter run
 - Distributed checkout consistency
 
 ### Planned
-- Admin dashboard
+- Distributed Idempotency: Migrate memory-based Set to Redis (SETNX) for horizontal scalability.
 - Email notifications
 - Coupon system
 - Multi-tenant support
