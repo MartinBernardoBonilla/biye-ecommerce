@@ -47,14 +47,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
         listener: (context, state) {
           if (state is CheckoutOrderCreated) {
             _lastOrderId = state.orderId;
-            if (state.qrData != null) {
-              if (state.paymentMethodType == 'qr' ||
-                  state.paymentMethodType == 'qr_manual') {
-                _showQRDialog(
-                    context, state.qrData!, state.qrImageBase64, state.orderId);
-              } else {
-                _openPaymentUrl(context, state.qrData!, state.orderId);
-              }
+            if (state.paymentMethodType == 'qr' ||
+                state.paymentMethodType == 'qr_manual') {
+              _showQRDialog(
+                  context, state.qrData, state.qrImageBase64, state.orderId);
+            } else {
+              _openPaymentUrl(context, state.qrData, state.orderId);
             }
           }
 

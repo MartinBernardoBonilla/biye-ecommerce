@@ -32,8 +32,6 @@ import 'core/widgets/app_initializer.dart';
 
 // ADMIN
 import 'package:biye/features/admin/data/services/admin_service.dart';
-import 'package:biye/features/admin/presentation/bloc/admin_bloc.dart';
-import 'package:biye/features/admin/domain/repositories/admin_repository_impl.dart';
 import 'package:biye/features/admin/presentation/pages/admin_login_page.dart';
 import 'package:biye/features/admin/presentation/pages/admin_panel_page.dart';
 import 'package:biye/features/product/presentation/pages/product_management_page.dart';
@@ -95,8 +93,6 @@ import 'package:biye/core/web/web_import.dart'
     if (dart.library.io) 'package:biye/core/web/web_import_stub.dart';
 
 import 'package:biye/features/cart/presentation/pages/cart_page.dart';
-
-import 'package:biye/core/constants/app_constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

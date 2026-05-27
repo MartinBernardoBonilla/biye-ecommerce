@@ -123,7 +123,7 @@ class QrPaymentResponse {
     final qrCode = json['qrCode'] ?? json['qr_image'] ?? json['qr'] ?? '';
 
     final qrCodeBase64 =
-        json['qrCodeBase64'] ?? json['qr_base64'] ?? json['qrImage'] ?? null;
+        json['qrCodeBase64'] ?? json['qr_base64'] ?? json['qrImage'];
 
     debugPrint(
         '✅ Parseado - orderId: $orderId, qrCode: ${qrCode.substring(0, qrCode.length > 50 ? 50 : qrCode.length)}...');

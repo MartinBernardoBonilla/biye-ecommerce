@@ -1,6 +1,5 @@
 import 'package:biye/core/network/api_client.dart';
 import '../../domain/entities/address.dart';
-import 'package:biye/core/network/api_client.dart';
 
 class AddressRepository {
   final ApiClient _apiClient;

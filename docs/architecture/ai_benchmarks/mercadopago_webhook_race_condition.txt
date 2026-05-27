@@ -1,0 +1,31 @@
+PROMPT TEMPLATE: DISTRIBUTED IDEMPOTENCY LOCK
+
+You are a Staff Engineer reviewing the architecture of "biye", a production-oriented fullstack e-commerce platform built with Flutter, Node.js, and MongoDB.
+The system uses Mercado Pago for asynchronous payment processing. Currently, the webhook handler uses an in-memory database constraint / atomic cache to ensure idempotency and handle duplicate events during checkout.
+
+### THE CHALLENGE:
+We are planning a migration to scale horizontally (horizontal scalability). If we deploy multiple instances of the Node.js backend behind a Load Balancer, the current memory-based check will cause a Race Condition because instances don't share memory.
+
+1. Explain how a distributed locking mechanism using Redis (SETNX) would solve this specific distributed idempotency problem.
+2. Provide the Node.js pseudocode for the robust webhook controller (`processWebhook`) incorporating Redis lock acquisition, atomic order state transitions (pending < processing < paid), and proper lock release/error handling if the DB fails.
+3. Keep the tone sharp, professional, and production-ready.
+
+---
+
+ROLE: Staff Distributed Systems Engineer
+STACK: Node.js (Horizontal Scaling), Redis (Single Node), MongoDB / Mongoose, Mercado Pago API.
+
+CONTEXT:
+We implemented your single-node Redis SETNX distributed lock pattern with a 10-second TTL to handle incoming Mercado Pago payment webhooks. Concurrency at the request layer is solved, and the DB uses atomic query filtering ({ paymentStatus: { $ne: 'paid' } }).
+
+STRESS TEST SCENARIO — THE SPLIT-BRAIN PARTIAL FAILURE:
+1. Instance A acquires the Redis lock (`lock:webhook:pay_999`) with a 10s TTL.
+2. Instance A fetches payment details from Mercado Pago (Response: SUCCESS / APPROVED).
+3. Right before Instance A executes `Order.findOneAndUpdate()` in MongoDB, the network infrastructure drops the connection to MongoDB (MongoDB Timeout / Network Partition), but the connection to Redis remains alive.
+4. Meanwhile, Mercado Pago’s webhook system fires an immediate retry because Instance A is lagging due to the DB timeout.
+5. Instance B receives the retry webhook.
+
+CRITICAL QUESTIONS FOR REVIEW:
+1. Since the Redis TTL is still ticking (let's say 4 seconds left) and Instance A hasn't released it because it's caught in the MongoDB catch block or timeout loop, what happens to Instance B's request? Does it return a 429 or 200? Explain the exact consistency implications for the user's checkout experience.
+2. In your previous code, the `catch(error)` block executes `await redis.del(lockKey)`. If Instance A hits that line due to the MongoDB network drop and deletes the lock while the MongoDB driver is still internally trying to reconnect/retry under the hood, what catastrophic race condition opens up?
+3. Provide the production-ready structural architecture modifications (e.g., precise database transaction strategies, dynamic lock renewals, or explicit 503 retry status codes) required to achieve bulletproof fault tolerance under this specific failure mode.
