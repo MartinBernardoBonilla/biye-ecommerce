@@ -1,33 +1,27 @@
-// Redis mock - Sin conexión real para desarrollo rápido
-console.log('⚠️  Redis desactivado (modo mock)');
+import { createClient } from 'redis';
 
-const mockRedisClient = {
-  get: async () => {
-    console.log('📦 Redis mock: get() -> null');
-    return null;
-  },
-  set: async () => {
-    console.log('📦 Redis mock: set() -> OK');
-    return 'OK';
-  },
-  setEx: async () => {
-    console.log('📦 Redis mock: setEx() -> OK');
-    return 'OK';
-  },
-  del: async () => {
-    console.log('📦 Redis mock: del() -> 0');
-    return 0;
-  },
-  connect: async () => {
-    console.log('📦 Redis mock: connect() -> éxito');
-    return true;
-  },
-  quit: async () => {
-    console.log('📦 Redis mock: quit()');
-    return true;
-  },
-  isReady: false,
-  on: () => {} // Método dummy para eventos
-};
+// Intentamos conectar al Redis real usando la URL del .env
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://127.0.0.1:6379'
+});
 
-export default mockRedisClient;
+redisClient.on('error', (err) => {
+  console.error('❌ [REDIS ERROR]:', err.message);
+});
+
+redisClient.on('connect', () => {
+  console.log('🛑 [REDIS] Intentando establecer conexión...');
+});
+
+redisClient.on('ready', () => {
+  console.log('✅ [REDIS] ¡Conectado y listo para usar en DB real!');
+});
+
+// Inicializamos la conexión asincrónica
+try {
+  await redisClient.connect();
+} catch (error) {
+  console.error('❌ No se pudo conectar a Redis Server. Asegurate de que esté corriendo con "sudo systemctl start redis-server"');
+}
+
+export default redisClient;
