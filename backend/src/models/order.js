@@ -51,7 +51,6 @@ const OrderSchema = new mongoose.Schema({
         required: true,
     },
 
-
     totalAmount: {
         type: Number,
         required: true,
@@ -73,7 +72,6 @@ const OrderSchema = new mongoose.Schema({
         enum: ['PENDING', 'WAITING_PAYMENT', 'PAID', 'CANCELLED', 'SHIPPED', 'DELIVERED']
     },
 
-    // ✅ AGREGA ESTOS CAMPOS
     paymentStatus: {
         type: String,
         default: 'pending',
@@ -84,6 +82,7 @@ const OrderSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+
     buyerInfo: {
         email: { type: String, required: true },
         name: { type: String },
@@ -93,6 +92,40 @@ const OrderSchema = new mongoose.Schema({
     paidAt: {
         type: Date,
         default: null
+    },
+
+    // 🚚 SUB-ESQUEMA DE LOGÍSTICA Y ENVÍOS INTEGRADO
+    shipping: {
+        method: {
+            type: String,
+            enum: ['pickup', 'custom_moto', 'carrier'],
+            required: true,
+            default: 'pickup'
+        },
+        carrierName: { type: String, default: null }, // 'andreani', 'local_moto', etc.
+        serviceType: { type: String, default: null }, // 'sucursal', 'domicilio'
+        cost: { type: Number, required: true, default: 0 },
+
+        address: {
+            street: { type: String, required: function () { return this.shipping.method !== 'pickup'; } },
+            number: { type: String, required: function () { return this.shipping.method !== 'pickup'; } },
+            floor: { type: String, default: null },
+            apartment: { type: String, default: null },
+            city: { type: String, required: function () { return this.shipping.method !== 'pickup'; } },
+            province: { type: String, required: function () { return this.shipping.method !== 'pickup'; } },
+            zipCode: { type: String, required: function () { return this.shipping.method !== 'pickup'; } },
+        },
+
+        tracking: {
+            trackingNumber: { type: String, default: null },
+            status: {
+                type: String,
+                enum: ['pending_label', 'ready_to_ship', 'in_transit', 'delivered', 'failed'],
+                default: 'pending_label'
+            },
+            labelUrl: { type: String, default: null },
+            estimatedDelivery: { type: Date, default: null }
+        }
     }
 
 }, {
