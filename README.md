@@ -241,6 +241,81 @@ npm run test
 
 ---
 
+## 🪝 Local Development & Payment Testing (Mercado Pago Webhook)
+
+To facilitate local development (`development`) without depending on tunnels like Ngrok or real Mercado Pago API calls, the backend includes a **Dynamic Bypass** that simulates the complete order lifecycle and its subsequent approval.
+
+### 🔄 Flow Architecture (Smoke Test)
+
+The local test circuit synchronously and asynchronously validates order creation, Redis idempotency control, and logistics dispatch.
+
+```text
+[Flutter Web / Postman] ──(Create Order)──> [POST /api/v1/orders] ──> State: PENDING
+                                                                           │
+[Postman Webhook Sim]   ──(Trigger MP)──>  [POST /payments/webhook]        │ (Fetches latest)
+                                                   │                       ▼
+                                           (Redis Idempotency) ──> [Updates to PAID]
+                                                                           │
+                                                                           ▼
+                                                                  [⚡ Shipping Manager]
+```
+
+### 🛠️ Smoke Test Step-by-Step
+
+Follow these steps strictly to test system reactivity in your development environment:
+
+#### 1. Create a Pending Order
+
+Fire an HTTP request to generate an order in `PENDING` state. This can be done from the Flutter interface or directly via Postman:
+
+- **Endpoint:** `POST http://localhost:5000/api/v1/orders`
+- **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+- **Body (JSON):**
+
+```json
+{
+  "currency": "ARS",
+  "items": [
+    {
+      "productId": "69a120ea861c2de7697950ce",
+      "name": "Remera Biye Test Logistica",
+      "quantity": 1,
+      "unitPrice": 15000
+    }
+  ]
+}
+```
+
+- **Expected response:** `201 Created` (returns the order object with its `_id`).
+
+#### 2. Simulate the Mercado Pago Notification (Webhook)
+
+Once the pending order is created, send the notification event simulating the payment gateway behavior:
+
+- **Endpoint:** `POST http://localhost:5000/api/v1/payments/webhook`
+- **Query Params:**
+  - `type`: `payment`
+  - `data.id`: `[Unique_Random_Number]` (e.g. `951753852`)
+- **Headers:** None required (public access)
+- **Body:** Empty `{}`
+
+> ⚠️ **Idempotency Note:** If you use a `data.id` that was already processed in the last 24 hours, Redis will block the request returning a safe duplicate state (`200 OK` without reprocessing). Make sure to change the number on each test run.
+
+#### 3. Verify in the Backend Console
+
+If the flow is correct, the Node.js terminal will log the following exact sequence:
+
+```text
+[MP WEBHOOK] Recibida notificación. Tipo: payment, Recurso ID: 951753852
+🪝 [REDIS REAL] Registrando nuevo webhook por primera vez: 951753852 (TTL: 24hs)
+[TEST LOCAL] Entorno de desarrollo detectado. Simulando datos.
+💰 Status del Pago: approved | Orden ID: 6a18514aea8181de46097cfe
+✅ [MP WEBHOOK ÉXITO] Orden 6a18514aea8181de46097cfe actualizada a PAID en Base de Datos.
+🚚 [LOGISTICA] Disparando proceso de envío para la orden: 6a18514aea8181de46097cfe
+```
+
+---
+
 ## Installation & Setup
 
 ### Backend
