@@ -1,12 +1,17 @@
+import 'package:flutter/foundation.dart'; // Asegurate de tener este import arriba
+
 class AppConstants {
 // ============================================
-// 1. URLs DEL BACKEND
+// 1. URLs DEL BACKEND (Híbrido Local / Producción)
 // ============================================
-  static const String apiBaseUrl =
-      'https://biye-ecommerce-production.up.railway.app/api/v1';
+  // kDebugMode es true automáticamente cuando ejecutas "flutter run" local
+  static const String apiBaseUrl = kDebugMode
+      ? 'http://localhost:5000/api/v1'
+      : 'https://biye-ecommerce-production.up.railway.app/api/v1';
 
-  static const String imageBaseUrl =
-      'https://biye-ecommerce-production.up.railway.app';
+  static const String imageBaseUrl = kDebugMode
+      ? 'http://localhost:5000'
+      : 'https://biye-ecommerce-production.up.railway.app';
 
 // Cloudinary
   static const String cloudinaryCloudName = 'dwchpxcrv';

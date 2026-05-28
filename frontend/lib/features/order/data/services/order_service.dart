@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:html' as html;
 import 'package:biye/core/constants/app_constants.dart'; // 👈 IMPORTAR
 import 'package:biye/core/utils/auth_storage.dart'; // 👈 PARA OBTENER TOKEN
 
@@ -42,7 +43,7 @@ class OrderService {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Origin': 'http://localhost:42321', // 👈 Para CORS en web
+        'Origin': html.window.location.origin, // 👈 Para CORS en web
       },
       body: json.encode({
         'currency': currency,

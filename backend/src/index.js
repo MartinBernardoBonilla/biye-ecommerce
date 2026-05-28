@@ -34,11 +34,11 @@ app.use('/api/v1/categories', categoryRoutes);
     await connectDB();
     console.log('✅ MongoDB conectado');
 
-    try {
-      await redisClient.connect();
-      console.log('✅ Redis conectado y listo');
-    } catch (redisError) {
-      console.warn('⚠️ Redis no disponible, continuando sin cache');
+    // 🧠 Validamos si el cliente de Redis que se importó ya está conectado de forma real
+    if (redisClient.isOpen) {
+      console.log('✅ Sistema de Caché e Idempotencia (Redis) activo globalmente');
+    } else {
+      console.warn('⚠️ Redis no disponible en este hilo, continuando sin caché');
     }
 
     app.listen(PORT, '0.0.0.0', () => {

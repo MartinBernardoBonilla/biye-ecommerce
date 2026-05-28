@@ -27,12 +27,22 @@ class CheckoutPage extends StatefulWidget {
 
 class _CheckoutPageState extends State<CheckoutPage> {
   String? _lastOrderId;
+  bool _isDialogOpen =
+      false; // 🧠 Flag para evitar colisiones de rutas en Navigator
 
   @override
   void initState() {
     super.initState();
     context.read<CheckoutBloc>().add(checkout.InitializeCheckout());
     context.read<CheckoutBloc>().add(checkout.LoadCheckoutData());
+  }
+
+  // Auxiliar seguro para cerrar diálogos abiertos por esta página
+  void _closeActiveDialog() {
+    if (_isDialogOpen && Navigator.canPop(context)) {
+      Navigator.pop(context);
+      _isDialogOpen = false;
+    }
   }
 
   @override
@@ -57,14 +67,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
           }
 
           if (state is CheckoutPaymentConfirmed) {
-            if (Navigator.canPop(context)) Navigator.pop(context);
+            _closeActiveDialog(); // Cierra QR o Waiting de forma segura
             _showSuccessAndNavigate(context);
           }
 
           if (state is CheckoutError) {
             if (state.message.contains('Tiempo de espera') &&
                 _lastOrderId != null) {
-              if (Navigator.canPop(context)) Navigator.pop(context);
+              _closeActiveDialog();
               _showTimeoutDialog(context, _lastOrderId!);
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -131,8 +141,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  // --- WIDGETS AUXILIARES ---
-
   Widget _buildBottomButton(BuildContext context, CheckoutLoaded state) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -158,18 +166,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  // --- FUNCIONES DE DIÁLOGOS Y NAVEGACIÓN ---
-
   Future<void> _openPaymentUrl(
       BuildContext context, String url, String orderId) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
+      _showWaitingDialog(
+          context, orderId); // Abrimos el diálogo antes de salir de la app
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-      // Iniciamos el polling después de abrir el navegador
       context
           .read<CheckoutBloc>()
           .add(checkout.CheckPaymentStatus(orderId: orderId));
-      _showWaitingDialog(context, orderId);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo abrir el enlace de pago')),
@@ -179,6 +185,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   void _showQRDialog(BuildContext context, String qrData, String? qrImageBase64,
       String orderId) {
+    _closeActiveDialog();
+    _isDialogOpen = true;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -210,6 +218,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         actions: [
           TextButton(
             onPressed: () {
+              _isDialogOpen = false;
               Navigator.pop(context);
               context.read<CheckoutBloc>().add(checkout.StopPolling());
             },
@@ -221,6 +230,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   void _showWaitingDialog(BuildContext context, String orderId) {
+    _closeActiveDialog();
+    _isDialogOpen = true;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -239,6 +250,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         actions: [
           TextButton(
             onPressed: () {
+              _isDialogOpen = false;
               Navigator.pop(context);
               context.read<CheckoutBloc>().add(checkout.StopPolling());
             },
@@ -250,6 +262,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   void _showTimeoutDialog(BuildContext context, String orderId) {
+    _isDialogOpen = true;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -258,11 +271,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
             'No pudimos confirmar el pago automáticamente. Si ya pagaste, podemos verificar el estado ahora.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              _isDialogOpen = false;
+              Navigator.pop(context);
+            },
             child: const Text('Esperar'),
           ),
           ElevatedButton(
             onPressed: () {
+              _isDialogOpen = false;
               Navigator.pop(context);
               context
                   .read<CheckoutBloc>()
@@ -276,6 +293,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   void _showSuccessAndNavigate(BuildContext context) {
+    // Nos aseguramos de vaciar el carrito ni bien sabemos que el pago fue exitoso
+    context.read<CartBloc>().add(ClearCart());
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -287,12 +307,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
             Text('¡Pago Exitoso!'),
           ],
         ),
-        content: const Text('Tu pago ha sido procesado correctamente.'),
+        content: const Text(
+            'Tu pago ha sido procesado correctamente y tu orden de envío está en camino.'),
         actions: [
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              context.read<CartBloc>().add(ClearCart());
               Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
             },
             child: const Text('Volver al Inicio'),
