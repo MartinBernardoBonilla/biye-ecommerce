@@ -184,15 +184,32 @@ The most advanced valid provider state always prevails.
 
 ---
 
+---
+
 ## Technical Challenges Solved
 
-Biye handles real-world edge cases such as:
+Implementing a bulletproof asynchronous payment lifecycle exposed several real-world edge cases. Below is the detailed breakdown of how we engineered the system to achieve production-grade stability across Dart Web and Node.js:
 
-- Delayed webhook delivery
-- Duplicate callback events
-- Interrupted checkout sessions
-- Pending payment reconciliation
-- Frontend/backend state desynchronization
+### 1. Fallback Type-Safety for In-Store Pickups (Dart Web)
+* **The Problem:** When an order was placed using the **In-Store Pickup (Pickup)** logistics method, the backend omitted residential shipping properties, returning them as `null` inside the payload. This triggered a strict type-safety exception in Dart Web (`Null is not a subtype of String`), crashing the entire Order Details view before it could even mount.
+* **The Solution:** We re-engineered the `OrderShipping.fromJson` factory constructor to perform smart, declarative data decoupling. If a `pickup` method is detected, or if key address properties are missing, the initialization of the nested `Address` entity is safely bypassed and assigned to `null`. This shields the UI from unexpected null-pointer runtime crashes while cleanly rendering store-collection workflows.
+
+### 2. Overriding Restrictive HTTP Browser Caching (304 Not Modified)
+* **The Problem:** During rapid client-side polling loops, modern web browsers aggressively cached the payment verification endpoints, continuously serving a stale `304 Not Modified` header. This froze the UI inside the "Waiting for Confirmation" loader indefinitively, even after the payment transaction had already been successfully processed and accredited on the database.
+* **The Solution:** We broke the restrictive browser caching layer by injecting a dynamic, unique millisecond timestamp query parameter into the network request URI within the Remote Data Source Layer (`$baseUrl/api/v1/orders/$orderId?t=$timestamp`). This explicit mutation forces the client browser to bypass its internal cache and pull a fresh, veridical state from the database on every single iteration loop.
+
+### 3. Webhook Security Architecture for External Payment Gateways
+* **The Problem:** Mercado Pago asynchronous webhooks notify our servers externally upon successful payment events. Because our generic endpoint architecture was universally guarded by a strict JSON Web Token (JWT) authentication middleware (`protect`), these automated external gateway callbacks were systematically rejected with `401 Unauthorized` errors.
+* **The Solution:** We decoupled the webhook route structure in the payment router (`router.post('/webhook', mercadoPagoWebhook);`), exposing it as a secure public route to handle unhindered incoming server-to-server payloads directly from Mercado Pago's cloud. Conversely, the manual state fallback route (`/api/v1/payments/update-status`) remains safely guarded under the global auth middleware, restricting override privileges strictly to authenticated platform administrators.
+
+### 📊 Production-Ready Order Lifecycle UI
+Once the distributed synchronization completes, the platform cleanly flushes the state machine, wipes the navigation history stack to prevent duplicate form submissions, and mounts the verified timeline overview:
+
+<div align="center">
+  <img src="https://res.cloudinary.com/dwchpxcrv/image/upload/v1717524000/order_detail_success.png" width="550" alt="Biye Order Detail Success Screen"/>
+  
+  *Figure: Fully parsed, type-safe Order Detail view executing a zero-cost In-Store Pickup timeline.*
+</div>
 
 ---
 
