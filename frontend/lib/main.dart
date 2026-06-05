@@ -148,8 +148,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final baseUrl = 'https://biye-ecommerce-production.up.railway.app';
-
+    // Antes: final baseUrl = 'https://biye-ecommerce-production.up.railway.app';
+    final baseUrl = 'http://localhost:5000/api/v1';
     return MultiProvider(
       providers: [
         Provider<ApiClient>(create: (_) => ApiClient()),
@@ -243,7 +243,9 @@ class _MyAppState extends State<MyApp> {
               onGenerateRoute: (settings) {
                 print('🔴 [MAIN] Generando ruta: ${settings.name}');
 
-                switch (settings.name) {
+                String routeName = settings.name ?? '';
+
+                switch (routeName) {
                   // AUTH
                   case '/login':
                     return MaterialPageRoute(
@@ -350,6 +352,8 @@ class _MyAppState extends State<MyApp> {
                   case OrderDetailPage.routeName:
                     return MaterialPageRoute(
                       builder: (context) => const OrderDetailPage(),
+                      settings:
+                          settings, // 🌟 ¡FALTA ESTA LÍNEA! Esto le pasa el ID a la pantalla
                     );
 
                   // PAYMENT RESULTS

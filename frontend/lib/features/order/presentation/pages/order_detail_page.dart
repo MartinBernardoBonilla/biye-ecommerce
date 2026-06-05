@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:biye/features/order/presentation/bloc/order_bloc.dart';
+// 📦 IMPORTAMOS EL TIMELINE QUE ESTABA HUÉRFANO:
+import 'package:biye/features/order/presentation/widgets/shipping_timeline.dart';
 
 class OrderDetailPage extends StatelessWidget {
   const OrderDetailPage({super.key});
@@ -19,6 +21,9 @@ class OrderDetailPage extends StatelessWidget {
         body: Center(child: Text('Orden no encontrada')),
       );
     }
+
+    // 🎯 REEMPLAZÁ CON ESTA LÍNEA CORREGIDA (en plural y con llaves):
+    context.read<OrderBloc>().add(LoadOrderDetails(orderId: orderId));
 
     return Scaffold(
       appBar: AppBar(
@@ -47,6 +52,7 @@ class OrderDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Tarjeta de información principal
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -61,7 +67,26 @@ class OrderDetailPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+
+                  // 🚚 SECCIÓN NUEVA: LÓGICA DE SEGUIMIENTO DE ENVÍO
+                  ...[
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Seguimiento del Envío',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        // Pasamos el objeto shipping de la orden al widget del stepper
+                        child: ShippingTimeline(shipping: order.shipping!),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
                   const Text(
                     'Productos',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

@@ -68,7 +68,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
           if (state is CheckoutPaymentConfirmed) {
             _closeActiveDialog(); // Cierra QR o Waiting de forma segura
-            _showSuccessAndNavigate(context);
+            _showSuccessAndNavigate(context, state.orderId);
           }
 
           if (state is CheckoutError) {
@@ -292,8 +292,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  void _showSuccessAndNavigate(BuildContext context) {
-    // Nos aseguramos de vaciar el carrito ni bien sabemos que el pago fue exitoso
+  void _showSuccessAndNavigate(BuildContext context, String orderId) {
+    // Vaciamos el carrito de forma limpia
     context.read<CartBloc>().add(ClearCart());
 
     showDialog(
@@ -308,14 +308,26 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ],
         ),
         content: const Text(
-            'Tu pago ha sido procesado correctamente y tu orden de envío está en camino.'),
+            'Tu pago ha sido procesado correctamente y tu orden ya está registrada.'),
         actions: [
           ElevatedButton(
             onPressed: () {
+              // 1. Cerramos el diálogo de éxito de forma segura
               Navigator.pop(context);
-              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+
+              // 2. ✅ SOLUCIÓN DEFINITIVA:
+              // Navegamos al nombre limpio de la ruta y le inyectamos el ID por arguments.
+              // Además, limpiamos todo el stack de pantallas anteriores (perfecto para post-compra).
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/order-detail', // 👈 Nombre limpio registrado en tus rutas
+                (route) =>
+                    false, // Elimina todas las pantallas del historial (evita volver al checkout vacío)
+                arguments:
+                    orderId, // 👈 El ID viaja de manera segura y dinámica por acá
+              );
             },
-            child: const Text('Volver al Inicio'),
+            child: const Text('Ver Detalles de la Orden'),
           ),
         ],
       ),

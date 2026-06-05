@@ -60,7 +60,12 @@ class ApiClient {
   // ======================
 
   Future<Map<String, dynamic>> get(String path) async {
-    final uri = Uri.parse('$_baseUrl/$path');
+    // 🎯 Agregamos un timestamp dinámico para que la URL sea única y Chrome NO use la caché
+    final separator = path.contains('?') ? '&' : '?';
+    final cacheBusterPath =
+        '$path${separator}_cb=${DateTime.now().millisecondsSinceEpoch}';
+
+    final uri = Uri.parse('$_baseUrl/$cacheBusterPath');
 
     final headers = await _getHeaders();
     final response = await _client.get(uri, headers: headers);
@@ -233,16 +238,17 @@ class ApiClient {
         break;
 
       default:
-        response = await _client.get(uri, headers: headers);
+        final separator = path.contains('?') ? '&' : '?';
+        final cacheBusterPath =
+            '$path${separator}_cb=${DateTime.now().millisecondsSinceEpoch}';
+        final retryUri = Uri.parse('$_baseUrl/$cacheBusterPath');
+        response = await _client.get(retryUri, headers: headers);
     }
 
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return data;
-    }
-
-    throw Exception(data['message'] ?? 'Error en retry');
+    // 🎯 REUTILIZAMOS EL HANDLER ORIGINAL:
+    // De esta manera, si la respuesta del reintento da 404 o viene sin data,
+    // se maneja el error correctamente en lugar de retornar un JSON crudo inválido.
+    return await _handleResponse(response, path, method, body);
   }
 
   // ======================

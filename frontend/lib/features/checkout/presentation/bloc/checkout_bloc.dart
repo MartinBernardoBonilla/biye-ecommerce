@@ -20,8 +20,8 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   final CartBloc _cartBloc;
   final AddressBloc _addressBloc;
   final PaymentMethodBloc _paymentMethodBloc;
-  final String _apiBaseUrl = 'https://biye-ecommerce-production.up.railway.app';
-
+  // Antes: final String _apiBaseUrl = 'https://biye-ecommerce-production.up.railway.app';
+  final String _apiBaseUrl = 'http://localhost:5000';
   // Control de polling
   bool _isPollingActive = false;
   static const int _maxPollingAttempts = 20;
@@ -69,11 +69,13 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     _paymentMethodBloc.add(LoadPaymentMethods());
 
     await Future.any([
-      _addressBloc.stream.firstWhere((s) => s is AddressesLoaded || s is AddressError),
+      _addressBloc.stream
+          .firstWhere((s) => s is AddressesLoaded || s is AddressError),
       Future.delayed(const Duration(seconds: 5)),
     ]);
     await Future.any([
-      _paymentMethodBloc.stream.firstWhere((s) => s is PaymentMethodsLoaded || s is PaymentMethodError),
+      _paymentMethodBloc.stream.firstWhere(
+          (s) => s is PaymentMethodsLoaded || s is PaymentMethodError),
       Future.delayed(const Duration(seconds: 5)),
     ]);
 

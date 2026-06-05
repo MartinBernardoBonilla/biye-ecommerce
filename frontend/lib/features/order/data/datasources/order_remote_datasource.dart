@@ -33,8 +33,10 @@ class OrderRemoteDataSource {
   Future<Map<String, dynamic>> getOrderById(String orderId) async {
     final token = await AuthStorage.getToken();
 
+    // 🎯 Forzamos un timestamp para destruir el maldito 304 de una vez por todas
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
     final response = await client.get(
-      Uri.parse('$baseUrl/api/v1/orders/$orderId'),
+      Uri.parse('$baseUrl/api/v1/orders/$orderId?t=$timestamp'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -42,7 +44,8 @@ class OrderRemoteDataSource {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final decodedBody = json.decode(response.body) as Map<String, dynamic>;
+      return decodedBody['data'] as Map<String, dynamic>;
     } else {
       throw Exception('Error cargando orden');
     }

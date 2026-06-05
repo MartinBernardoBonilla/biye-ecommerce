@@ -19,7 +19,6 @@ import 'package:biye/features/cart/presentation/bloc/cart_event.dart';
 import 'package:biye/features/cart/domain/entities/cart_item.dart';
 
 // Importaciones de admin y productos
-import 'package:biye/features/admin/presentation/pages/admin_login_page.dart';
 import 'package:biye/features/product/data/models/product_model.dart';
 import 'package:biye/features/product/data/services/product_service.dart';
 
@@ -30,6 +29,9 @@ import 'package:biye/features/favorites/presentation/bloc/favorites_state.dart';
 
 import 'package:biye/core/utils/route_transitions.dart';
 import 'package:biye/features/profile/presentation/pages/profile_page.dart';
+
+// 🎯 AGREGÁ ESTE IMPORT ARRIBA DE TODO EN HOME_SCREEN.DART:
+import 'package:biye/features/order/presentation/pages/order_detail_page.dart';
 
 // ------------------------------------------------------------------
 // GLASSMORPHISM CARD (con navegación a detalle y cursor clickeable)
@@ -768,19 +770,6 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
           ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            context.read<AuthBloc>().add(AuthCheckStatus());
-            Future.delayed(const Duration(milliseconds: 100), () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AdminLoginPage()),
-              );
-            });
-          },
-          backgroundColor: Colors.blueGrey[800]!,
-          child: const Icon(Icons.admin_panel_settings, color: Colors.white),
         ),
       ),
     );

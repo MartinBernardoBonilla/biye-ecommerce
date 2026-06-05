@@ -19,8 +19,10 @@ class OrderRepositoryImpl implements OrderRepository {
     try {
       final response = await apiClient.post('orders', order.toJson());
 
-      if (response['success'] == true) {
-        return Order.fromJson(response['order']);
+      // Si el backend te devuelve la orden directa o dentro de data/order
+      if (response != null) {
+        final orderData = response['data'] ?? response['order'] ?? response;
+        return Order.fromJson(orderData as Map<String, dynamic>);
       }
       return null;
     } catch (e) {
@@ -34,8 +36,13 @@ class OrderRepositoryImpl implements OrderRepository {
     try {
       final response = await apiClient.get('orders/$id');
 
-      if (response['success'] == true) {
-        return Order.fromJson(response['order']);
+      if (response != null && response['success'] == true) {
+        // 🎯 SOLUCIÓN: Buscamos en 'data', si no está probamos con 'order' o el body entero
+        final orderData = response['data'] ?? response['order'] ?? response;
+
+        if (orderData != null) {
+          return Order.fromJson(orderData as Map<String, dynamic>);
+        }
       }
       return null;
     } catch (e) {
@@ -49,9 +56,16 @@ class OrderRepositoryImpl implements OrderRepository {
     try {
       final response = await apiClient.get('orders');
 
-      if (response['success'] == true) {
-        final List<dynamic> ordersJson = response['orders'];
-        return ordersJson.map((json) => Order.fromJson(json)).toList();
+      if (response != null && response['success'] == true) {
+        // El listado de mis órdenes suele venir en 'data' o 'orders'
+        final List<dynamic>? ordersJson =
+            response['data'] ?? response['orders'];
+
+        if (ordersJson != null) {
+          return ordersJson
+              .map((json) => Order.fromJson(json as Map<String, dynamic>))
+              .toList();
+        }
       }
       return [];
     } catch (e) {
