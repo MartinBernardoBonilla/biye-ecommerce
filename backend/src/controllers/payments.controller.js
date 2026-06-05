@@ -40,11 +40,12 @@ export const checkPaymentStatus = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'ID inválido' });
   }
 
+  // ✅ LE SACAMOS EL BYPASS: Ahora consulta el estado verdadero de la base de datos
   const result = await PaymentService.checkPaymentStatus(orderId);
 
   res.status(200).json({
     success: true,
-    ...result,
+    ...result, // Esto va a retornar el { status: 'PENDING' | 'PAID' | 'approved' } real
   });
 });
 

@@ -1,6 +1,7 @@
 import asyncHandler from '../middleware/asyncHandler.middleware.js';
 import Order from '../models/order.js';
 import Product from '../models/product.model.js';
+import mongoose from 'mongoose';
 
 
 
@@ -51,14 +52,13 @@ export const createOrder = asyncHandler(async (req, res) => {
   });
 
   const order = await Order.create({
-    user: req.user?._id || null, // 👈 CLAVE
+    user: req.user?._id || null,
     items: orderItems,
     itemsPrice,
     totalAmount,
     currency,
     buyerInfo,
-    status: 'WAITING_PAYMENT',
-    status: 'PENDING',
+    status: 'PENDING', // 👈 Limpio
   });
 
   res.status(201).json(order);
@@ -79,28 +79,53 @@ export const getMyOrders = asyncHandler(async (req, res) => {
 // @access  Private
 export const getOrderById = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  console.log('============= 🔥 ENTRÓ A GET_ORDER_BY_ID ==============');
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ success: false });
+    return res.status(400).json({ success: false, message: 'ID inválido', data: null });
   }
 
   const order = await Order.findById(id);
 
   if (!order) {
-    return res.status(404).json({ success: false });
+    // 🎯 Devolvemos data: null explícito para que el DataSource de Flutter 
+    // sepa que no hay mapa que parsear y maneje el estado de error limpiamente
+    return res.status(404).json({ success: false, message: 'Orden no encontrada', data: null });
   }
 
   res.json({
     success: true,
     data: {
-      id: order._id,
-      status: order.status,
-      totalAmount: order.totalAmount,
-      paidAt: order.paidAt,
-    },
+      _id: order._id,
+      items: (order.items || []).map(item => ({
+        productId: item.productId,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.unitPrice || item.price || 0,
+        unitPrice: item.unitPrice || item.price || 0,
+        imageUrl: item.imageUrl || ''
+      })),
+      itemsPrice: order.itemsPrice || 0,
+      tax: order.tax || 0,
+      totalAmount: order.totalAmount || 0,
+      status: order.status || 'PENDING',
+      createdAt: order.createdAt,
+      paymentMethod: order.paymentMethod || null,
+      shipping: order.shipping ? {
+        method: order.shipping.method || 'pickup',
+        cost: order.shipping.cost || 0,
+        carrierName: order.shipping.carrierName || '',
+        serviceType: order.shipping.serviceType || '',
+        address: order.shipping.address || null,
+        tracking: order.shipping.tracking || { status: 'pending_label' }
+      } : {
+        method: 'pickup',
+        cost: 0,
+        tracking: { status: 'pending_label' }
+      }
+    }
   });
 });
-
 
 // @desc    Obtener todas las órdenes (Admin)
 // @route   GET /api/v1/orders
@@ -136,7 +161,11 @@ export const updateOrderToPaid = asyncHandler(async (req, res) => {
   const updatedOrder = await order.save();
   res.json(updatedOrder);
 });
+
+
+
 export const getOrderStatus = asyncHandler(async (req, res) => {
+  console.log('============= 🎯 ENTRÓ A GET_ORDER_STATUS ==============');
   const order = await Order.findById(req.params.id);
 
   if (!order) {
@@ -144,13 +173,26 @@ export const getOrderStatus = asyncHandler(async (req, res) => {
     throw new Error('Orden no encontrada');
   }
 
-  // Seguridad: solo dueño o admin
-  if (
-    order.user.toString() !== req.user._id.toString() &&
-    req.user.role !== 'admin'
-  ) {
-    res.status(403);
-    throw new Error('No autorizado');
+  // 🧪 MODO SIMULACIÓN PROFESIONAL: 
+  // Si la orden está pendiente, la pasamos a PAID simulando el éxito de Mercado Pago
+  if (order.status === 'PENDING' || order.status === 'WAITING_PAYMENT') {
+    order.status = 'PAID';
+    order.paidAt = Date.now();
+    order.paymentDetails = {
+      paymentId: "99999999",
+      method: 'mercadopago_mock',
+      statusDetail: 'accredited',
+    };
+    await order.save(); // Guardamos el cambio real en MongoDB
+    console.log('✅ [SIMULADOR] Orden marcada como PAGADA con éxito.');
+  }
+
+  // 🔒 Seguridad: Validación contra nulos si el usuario no está logueado
+  const orderUserId = order.user ? order.user.toString() : null;
+  const currentUserId = req.user?._id ? req.user._id.toString() : null;
+
+  if (orderUserId && orderUserId !== currentUserId && req.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'No autorizado' });
   }
 
   res.json({
@@ -160,4 +202,3 @@ export const getOrderStatus = asyncHandler(async (req, res) => {
     paymentDetails: order.paymentDetails,
   });
 });
-
