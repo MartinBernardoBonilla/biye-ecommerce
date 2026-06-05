@@ -206,7 +206,7 @@ Implementing a bulletproof asynchronous payment lifecycle exposed several real-w
 Once the distributed synchronization completes, the platform cleanly flushes the state machine, wipes the navigation history stack to prevent duplicate form submissions, and mounts the verified timeline overview:
 
 <div align="center">
-  <img src="https://res.cloudinary.com/dwchpxcrv/image/upload/v1717524000/order_detail_success.png" width="550" alt="Biye Order Detail Success Screen"/>
+  <img src="https://res.cloudinary.com/dwchpxcrv/image/upload/Captura_desde_2026-06-04_15-44-15_bdsdkj.png"/>
   
   *Figure: Fully parsed, type-safe Order Detail view executing a zero-cost In-Store Pickup timeline.*
 </div>
