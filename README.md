@@ -325,11 +325,12 @@ If the flow is correct, the Node.js terminal will log the following exact sequen
 
 ```text
 [MP WEBHOOK] Recibida notificación. Tipo: payment, Recurso ID: 951753852
-🪝 [REDIS REAL] Registrando nuevo webhook por primera vez: 951753852 (TTL: 24hs)
+🪝 [CACHE LOCAL] Registrando nuevo webhook por primera vez en Set de memoria: 951753852
 [TEST LOCAL] Entorno de desarrollo detectado. Simulando datos.
 💰 Status del Pago: approved | Orden ID: 6a18514aea8181de46097cfe
 ✅ [MP WEBHOOK ÉXITO] Orden 6a18514aea8181de46097cfe actualizada a PAID en Base de Datos.
 🚚 [LOGISTICA] Disparando proceso de envío para la orden: 6a18514aea8181de46097cfe
+[LOGISTICA SUCCESS] Orden 6a18514aea8181de46097cfe lista para retiro en sucursal.
 ```
 
 ---
