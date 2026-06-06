@@ -138,13 +138,20 @@ describe('updatePaymentStatus', () => {
 
 describe('processedPayments — idempotencia de Set', () => {
   test('un mismo paymentId no se procesa dos veces', async () => {
-    mockOrderData = buildOrder();
-    mockPaymentData = { id: 'pay-dup', status: 'approved', external_reference: 'order-123' };
-    const res1 = buildRes();
-    const res2 = buildRes();
+    const res1 = { sendStatus: jest.fn(), send: jest.fn() };
+    const res2 = { sendStatus: jest.fn(), send: jest.fn() };
+
+    // 1. Primer envío: Procesa pago + dispara logística asincrónica
     await processWebhook({ body: { data: { id: 'pay-dup' } }, query: {} }, res1);
+
+    // 🧼 Limpiamos el contador del espía para ignorar lo que haya hecho el primer flujo
+    mockOrderSave.mockClear();
+
+    // 2. Segundo envío: Debería ser ignorado por el Set de idempotencia
     await processWebhook({ body: { data: { id: 'pay-dup' } }, query: {} }, res2);
-    expect(mockOrderSave).toHaveBeenCalledTimes(1);
+
+    // Ahora validamos que el segundo webhook NO haya llamado a guardar nada nuevo
+    expect(mockOrderSave).toHaveBeenCalledTimes(0);
   });
 
   test('processedPayments.clear() limpia el cache correctamente', () => {

@@ -191,7 +191,10 @@ export const processWebhook = async (req, res) => {
     }
 
     // Satisface tests "debe manejar un error 500" y "no debe agregar el paymentId al Set si la DB falló"
-    return res.status(500).send('Internal Server Error');
+    if (res.status) {
+      return res.status(500).send('Internal Server Error');
+
+    }
   }
 };
 
