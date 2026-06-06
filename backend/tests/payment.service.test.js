@@ -6,7 +6,10 @@ let mockPaymentData = {};
 let shouldMPFail = false; // Control dinámico para hacer fallar a Mercado Pago
 
 jest.unstable_mockModule('../src/models/order.js', () => ({
-  default: { findById: jest.fn() },
+  default: {
+    findById: jest.fn(),
+    findOne: jest.fn(),
+  },
 }));
 
 jest.unstable_mockModule('mercadopago', () => ({
@@ -48,10 +51,18 @@ const buildOrder = (o = {}) => ({
 beforeEach(() => {
   jest.clearAllMocks();
   processedPayments.clear();
-  shouldMPFail = false; // Reseteamos el estado de fallo en cada test
+  shouldMPFail = false;
   mockPaymentData = {};
+
+  const mockQuery = (data) => ({
+    sort: jest.fn().mockResolvedValue(data),
+  });
+
   Order.findById.mockImplementation(() =>
     mockOrderData ? { ...mockOrderData, save: mockOrderSave } : null
+  );
+  Order.findOne.mockImplementation(() =>
+    mockQuery(mockOrderData ? { ...mockOrderData, save: mockOrderSave } : null)
   );
 });
 
@@ -76,7 +87,8 @@ describe('processWebhook', () => {
   });
 
   test('no sobreescribe una orden ya aprobada', async () => {
-    mockOrderData = buildOrder({ paymentStatus: 'approved', isPaid: true });
+    // 🎯 FIX: Agregamos status: 'PAID' para que el objeto simulado refleje una orden completada real
+    mockOrderData = buildOrder({ paymentStatus: 'approved', isPaid: true, status: 'PAID' });
     mockPaymentData = { id: 'pay-2', status: 'approved', external_reference: 'order-123' };
     const res = buildRes();
     await processWebhook({ body: { data: { id: 'pay-2' } }, query: {} }, res);

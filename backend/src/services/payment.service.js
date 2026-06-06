@@ -76,7 +76,7 @@ export const checkPaymentStatus = async (orderId) => {
 };
 
 // =======================
-// WEBHOOK CON IDEMPOTENCIA (MODIFICADO PARA TEST LOCAL)
+// WEBHOOK CON IDEMPOTENCIA (SOPORTE DE TEST INTEGRADO)
 // =======================
 export const processWebhook = async (req, res) => {
   let currentPaymentId = null;
@@ -89,7 +89,7 @@ export const processWebhook = async (req, res) => {
 
     if (!paymentId) {
       console.log('❌ No se encontró paymentId');
-      return res.sendStatus(200);
+      return res.sendStatus(200); // Satisface test "responde 200 si no viene paymentId"
     }
 
     currentPaymentId = paymentId;
@@ -103,34 +103,66 @@ export const processWebhook = async (req, res) => {
     processedPayments.add(paymentId);
     console.log(`🪝 Procesando webhook por primera vez: ${paymentId}`);
 
-    // 🛑 BYPASS PARA TEST LOCAL (Simulamos la respuesta de Mercado Pago sin ir a internet)
-    console.log(`[TEST LOCAL] Simulando consulta de pago ID ${paymentId} sin llamar a MP.`);
+    let paymentStatus;
+    let order;
+    let paymentDetailsObject;
 
-    const paymentStatusSimulado = 'approved';
+    // 🔀 BIFURCACIÓN DE ENTORNO: Desarrollo manual vs Suite de Tests o Producción
+    if (process.env.NODE_ENV === 'development') {
+      // 🛑 BYPASS LOCAL (Tu flujo cómodo en Debian)
+      console.log(`[TEST LOCAL] Simulando consulta de pago ID ${paymentId} sin llamar a MP.`);
+      paymentStatus = 'approved';
+      order = await Order.findOne().sort({ createdAt: -1 });
 
-    // 4. Buscar la ÚLTIMA orden creada en la base de datos automáticamente
-    const order = await Order.findOne().sort({ createdAt: -1 });
-
-    if (order) {
-      const orderId = order._id;
-      const paymentStatus = paymentStatusSimulado;
-
-      // Mapear detalles de pago falsificados para el test
-      const paymentDetailsObject = {
+      paymentDetailsObject = {
         paymentId: paymentId,
         preferenceId: 'mock-pref-123',
         method: 'account_money',
         statusDetail: 'accredited',
       };
+    } else {
+      // 🧪 MODO TEST / PRODUCCIÓN: Consumo dinámico de la API de Mercado Pago
+      console.log(`[PROD/TEST] Consultando estado oficial en MP para ID: ${paymentId}`);
 
-      // 5. Lógica de confirmación de pago
+      const payment = new Payment(client);
+      const paymentData = await payment.get({ id: paymentId }); // Si shouldMPFail es true, acá rompe e irá al catch (500)
+
+      paymentStatus = paymentData?.status;
+      const externalReference = paymentData?.external_reference;
+
+      // Validación para respuestas inesperadas o malformadas de la API externa
+      if (!externalReference || !paymentStatus) {
+        console.log(`[MP WEBHOOK] Formato de pago inválido o sin external_reference para ID: ${paymentId}`);
+        return res.status(400).send('Bad Request'); // Satisface test "debe manejar una respuesta vacía o inesperada"
+      }
+
+      order = await Order.findById(externalReference);
+
+      // Si la orden no existe, devolvemos 200 OK para frenar los reintentos automáticos de la pasarela de pagos
+      if (!order) {
+        console.error(`[MP WEBHOOK ERROR] La orden ${externalReference} no existe en la Base de Datos.`);
+        return res.sendStatus(200); // Satisface test "responde 200 si la orden no existe"
+      }
+
+      paymentDetailsObject = {
+        paymentId: paymentId,
+        preferenceId: paymentData.preference_id || 'prod-pref-id',
+        method: paymentData.payment_method_id || 'unknown_method',
+        statusDetail: paymentData.status_detail || 'accredited',
+      };
+    }
+
+    // LÓGICA DE CONFIRMACIÓN Y MÁQUINA DE ESTADOS (Idéntica en ambos entornos)
+    if (order) {
+      const orderId = order._id;
+
       if (paymentStatus === 'approved' && order.status !== 'PAID') {
         order.status = 'PAID';
         order.isPaid = true;
         order.paymentStatus = 'approved';
         order.paymentDetails = paymentDetailsObject;
 
-        await order.save();
+        await order.save(); // Si explota la DB, salta al catch y borra el Set para reintentos
         console.log(`✅ [MP WEBHOOK ÉXITO] Orden ${orderId} actualizada a PAID en Base de Datos.`);
 
         // 🚀 EL ENCHUFE ASINCRÓNICO DE LOGÍSTICA
@@ -147,20 +179,19 @@ export const processWebhook = async (req, res) => {
         console.log(`[MP WEBHOOK INFO] Orden ${orderId} actualizada con estado MP: ${paymentStatus}`);
       }
 
-      // 6. Respuesta OK
       return res.sendStatus(200);
-
-    } else {
-      console.error(`[MP WEBHOOK ERROR] No se encontró ninguna orden en la base de datos.`);
-      return res.status(200).send('No hay órdenes en la DB.');
     }
   } catch (error) {
     console.error('❌ Error crítico en webhook:', error.message);
+
+    // 🛡️ Si falló la persistencia (DB) o la red, removemos el ID del Set para habilitar reintentos en el próximo webhook
     if (currentPaymentId) {
       processedPayments.delete(currentPaymentId);
-      console.log(`🗑️ Removido paymentId ${currentPaymentId} del Set debido a un error.`);
+      console.log(`🗑️ Removido paymentId ${currentPaymentId} del Set debido a un error de ejecución.`);
     }
-    res.status(500).send('Internal Server Error');
+
+    // Satisface tests "debe manejar un error 500" y "no debe agregar el paymentId al Set si la DB falló"
+    return res.status(500).send('Internal Server Error');
   }
 };
 
